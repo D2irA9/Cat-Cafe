@@ -1,12 +1,15 @@
+"""Для подключению к БД"""
 import pymysql
 from prettytable import PrettyTable
+import hashlib
+from datetime import datetime
 
 class Database:
-    def __init__(self, host, user, password, database):
-        self.host = host
-        self.user = user
-        self.password = password
-        self.database = database
+    def __init__(self):
+        self.host = "127.0.0.1"
+        self.user = "root"
+        self.password = "1111"
+        self.database = "cat_cafe"
         self.connection = None
 
     def connect(self):
@@ -32,21 +35,30 @@ class Database:
             with self.connection.cursor() as cursor:
                 cursor.execute(query, params)
                 self.connection.commit()
-                return cursor.fetchall(), cursor.description  # Возвращаем результаты и метаданные
+                return cursor.fetchall(), cursor.description
 
         except pymysql.MySQLError as e:
             print(f"Ошибка '{e}' при выполнении запроса: {query}")
-            return None, None  # Возвращаем None для результатов и метаданных
+            return None, None
 
-    def select(self, table, columns='*', where_condition=None):
-        """Выбирает данные из таблицы."""
-        query = f"SELECT {columns} FROM {table}"
-        params = None
-        if where_condition:
-            where_str = ' AND '.join([f"{col} = %s" for col in where_condition.keys()])
-            query += f" WHERE {where_str}"
-            params = list(where_condition.values())
-        return self.execute_query(query, params)
+    def encrypt_password(self, password):
+        """Шифрует пароль с использованием MD5."""
+        return hashlib.md5(password.encode()).hexdigest()
+
+    def add_player(self, name, email, password, balance=100, day=1):
+        """Добавление игрока"""
+        
+        # Шифрование пароля
+        encrypted_password = self.encrypt_password(password)
+
+        query = "INSERT INTO `player` (name, day, balance, email, password, regist_date) VALUES (%s, %s, %s, %s, %s, NOW())"
+        params = (name, day, balance, email, encrypted_password)
+
+        result, _ = self.execute_query(query, params)
+        if result is not None:
+            print("Игрок успешно добавлен.")
+        else:
+            print("Не удалось добавить игрока.")
 
     def close(self):
         """Закрывает соединение с базой данных."""
@@ -54,22 +66,7 @@ class Database:
             self.connection.close()
             print("Соединение с MySQL закрыто")
 
-# Пример использования
-db = Database("127.0.0.1", "root", "1111", "cat_cafe")
-db.connect()
 
-# Получаем данные из таблицы "player"
-result, description = db.select("player")
-if result is not None and description is not None:
-    # Создаем таблицу для вывода
-    table = PrettyTable()
-    table.field_names = [desc[0] for desc in description]  # Получаем названия колонок
-
-    for row in result:
-        table.add_row(row)
-
-    print(table)
-else:
-    print("Не удалось получить данные из таблицы.")
-
-db.close()
+db = Database()
+# db.connect()
+# db.close()
