@@ -59,6 +59,15 @@ class Database:
         else:
             print("Не удалось добавить игрока.")
 
+    def check_user(self, email, password):
+        """Проверяет, существует ли пользователь с данным email и паролем."""
+        encrypted_password = self.encrypt_password(password)
+        query = "SELECT * FROM `player` WHERE email = %s AND password = %s"
+        params = (email, encrypted_password)
+
+        result, _ = self.execute_query(query, params)
+        return result is not None and len(result) > 0
+
     def close(self):
         """Закрывает соединение с базой данных."""
         if self.connection:

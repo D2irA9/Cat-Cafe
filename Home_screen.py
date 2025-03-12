@@ -153,6 +153,7 @@ def No_button():
 
         py.display.flip()
 
+
 def Yes_button():
     py.init()
     new_screen = py.display.set_mode((600, 900))
@@ -164,17 +165,17 @@ def Yes_button():
 
     # Переменные для ввода текста
     input_boxes = [
-        py.Rect(75, 300, 450, 70),
-        py.Rect(75, 450, 450, 70),
+        py.Rect(75, 300, 450, 70),  # Email
+        py.Rect(75, 450, 450, 70),  # Пароль
     ]
     # Список для хранения введенного текста
     input_texts = ['', '']
     active_input = -1
     color_inactive = py.Color('lightskyblue3')
     color_active = py.Color('dodgerblue2')
-    text = "Для начала введи свои данные ;)"
+    text = "Для входа введите свои данные ;)"
     text_enter = "После заполнения нажмите - Enter"
-    text_er = "Все поля должны заполнены"
+    text_er = "Все поля должны быть заполнены"
 
     # Шрифт
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
@@ -184,8 +185,8 @@ def Yes_button():
     text_er_rect = None
 
     # Подключение к БД
-    # db = Database()
-    # db.connect()
+    db = Database()
+    db.connect()
 
     while True:
         for event in py.event.get():
@@ -198,14 +199,20 @@ def Yes_button():
                 if active_input != -1:
                     if event.key == py.K_RETURN:
                         if all(input_texts):
-                            # print("Email:", input_texts[0])
-                            print("Имя:", input_texts[0])
-                            print("Пароль:", input_texts[1])
-                            # db.add_player(input_texts[2], input_texts[0], input_texts[1])
-                            # db.close()
-                            input_texts = ['', '']
-                            active_input = -1
-                            text_er_surf = None
+                            email = input_texts[0]
+                            password = input_texts[1]
+
+                            # Проверка пользователя
+                            if db.check_user(email, password):
+                                print("Успешный вход в аккаунт!")
+                                # Здесь можно добавить логику для перехода на следующий экран
+                                input_texts = ['', '']
+                                active_input = -1
+                                text_er_surf = None
+                            else:
+                                text_er_surf = font.render("Неверный email или пароль.", True, (220, 20, 60))
+                                text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
+
                         else:
                             text_er_surf = font.render(text_er, True, (220, 20, 60))
                             text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -231,11 +238,11 @@ def Yes_button():
         new_screen.blit(text_surf, text_rect)
 
         text_enter_surf = font.render(text_enter, True, BLACK)
-        text_enter_rect = text_enter_surf.get_rect(center=(new_screen.get_width()//2, 100))
+        text_enter_rect = text_enter_surf.get_rect(center=(new_screen.get_width() // 2, 100))
         new_screen.blit(text_enter_surf, text_enter_rect)
 
         # Отрисовка текстовых полей и меток
-        labels = ["Имя", "Пароль"]
+        labels = ["Email", "Пароль"]
         for i, box in enumerate(input_boxes):
             # Отрисовка метки
             label_surface = font.render(labels[i], True, BLACK)
@@ -257,6 +264,7 @@ def Yes_button():
 
         py.display.flip()
 
+    db.close()
 
 if __name__ == "__main__":
     main()
