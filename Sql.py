@@ -1,7 +1,5 @@
 import pymysql
-from prettytable import PrettyTable
 import hashlib
-from datetime import datetime
 
 class Database:
     def __init__(self):
@@ -60,7 +58,7 @@ class Database:
             print("Не удалось добавить игрока.")
 
     def check_user(self, email, password):
-        """Проверяет, существует ли пользователь с данным email и паролем."""
+        """Проверяет, существует ли пользователь с данным email и паролем"""
         encrypted_password = self.encrypt_password(password)
         query = "SELECT * FROM `player` WHERE email = %s AND password = %s"
         params = (email, encrypted_password)

@@ -3,7 +3,8 @@ import sys
 from Button import Button
 from Sql import Database
 
-def main():
+def Home_screen():
+    """Начальный экран"""
     py.init()
     screen = py.display.set_mode((600, 900))
     py.display.set_caption("Hi")
@@ -50,6 +51,7 @@ def main():
         py.display.flip()
 
 def No_button():
+    """Если выброно нет"""
     py.init()
     new_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Регистрация")
@@ -155,6 +157,7 @@ def No_button():
 
 
 def Yes_button():
+    """Если выброно да"""
     py.init()
     new_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Вход")
@@ -266,5 +269,5 @@ def Yes_button():
 
     db.close()
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__Home_screen__":
+    Home_screen()
