@@ -1,4 +1,3 @@
-"""Для подключению к БД"""
 import pymysql
 from prettytable import PrettyTable
 import hashlib
@@ -65,8 +64,3 @@ class Database:
         if self.connection:
             self.connection.close()
             print("Соединение с MySQL закрыто")
-
-
-db = Database()
-# db.connect()
-# db.close()
