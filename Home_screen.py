@@ -106,6 +106,8 @@ def No_button():
                             input_texts = ['', '', '']
                             active_input = -1
                             text_er_surf = None
+                            # Запуск game
+                            game()
                         else:
                             text_er_surf = font.render(text_er, True, (220, 20, 60))
                             text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -215,6 +217,8 @@ def Yes_button():
                                 input_texts = ['', '']
                                 active_input = -1
                                 text_er_surf = None
+                                # Запуск game
+                                game()
                             else:
                                 text_er_surf = font.render("Неверный email или пароль.", True, (220, 20, 60))
                                 text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -271,6 +275,7 @@ def Yes_button():
         py.display.flip()
 
     db.close()
+
 
 if __name__ == "__Home_screen__":
     Home_screen()
