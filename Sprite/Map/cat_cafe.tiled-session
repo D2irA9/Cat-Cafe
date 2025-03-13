@@ -1,0 +1,105 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "безымянный.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "Basic_Furniture.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 4
+        },
+        "Basic_Grass_Biom_things.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 2,
+            "scaleInEditor": 4
+        },
+        "Bitmask references gif.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 2,
+            "scaleInEditor": 1
+        },
+        "Doors.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 4
+        },
+        "Fences.tsx": {
+            "scaleInDock": 4,
+            "scaleInEditor": 4
+        },
+        "Grass.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 4
+        },
+        "Hills.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 4
+        },
+        "Tilled_Dirt.tsx": {
+            "scaleInDock": 1.5,
+            "scaleInEditor": 4
+        },
+        "Water.tsx": {
+            "scaleInDock": 4,
+            "scaleInEditor": 4
+        },
+        "Wood_Bridge.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 4
+        },
+        "Wooden_House_Walls_Tilset.tsx": {
+            "scaleInDock": 3,
+            "scaleInEditor": 4
+        },
+        "безымянный.tmx": {
+            "scale": 2,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 13.5,
+                "y": 380
+            }
+        }
+    },
+    "last.imagePath": "C:/other/code/python/Cat-Cafe/Sprite/Objects",
+    "map.height": 57,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 38,
+    "openFiles": [
+        "безымянный.tmx",
+        "Basic_Grass_Biom_things.tsx",
+        "Basic_Furniture.tsx",
+        "Doors.tsx",
+        "Fences.tsx",
+        "Grass.tsx",
+        "Hills.tsx",
+        "Tilled_Dirt.tsx",
+        "Wooden_House_Walls_Tilset.tsx",
+        "Water.tsx",
+        "Wood_Bridge.tsx"
+    ],
+    "project": "cat_cafe.tiled-project",
+    "recentFiles": [
+        "Wood_Bridge.tsx",
+        "Water.tsx",
+        "Wooden_House_Walls_Tilset.tsx",
+        "Tilled_Dirt.tsx",
+        "Hills.tsx",
+        "Grass.tsx",
+        "Fences.tsx",
+        "Doors.tsx",
+        "Basic_Furniture.tsx",
+        "Basic_Grass_Biom_things.tsx",
+        "безымянный.tmx",
+        "Bitmask references gif.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
