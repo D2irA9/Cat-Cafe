@@ -2,6 +2,7 @@ import pygame as py
 import sys
 from Button import Button
 from Sql import Database
+from Game import game
 
 def Home_screen():
     """Начальный экран"""
@@ -81,6 +82,7 @@ def No_button():
     # Инициализация переменной для текста ошибки
     text_er_surf = None
     text_er_rect = None
+
     # Подключение к БД
     db = Database()
     db.connect()
@@ -171,6 +173,7 @@ def Yes_button():
         py.Rect(75, 300, 450, 70),  # Email
         py.Rect(75, 450, 450, 70),  # Пароль
     ]
+
     # Список для хранения введенного текста
     input_texts = ['', '']
     active_input = -1

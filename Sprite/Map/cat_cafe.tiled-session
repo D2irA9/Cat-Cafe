@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "безымянный.tmx",
+    "activeFile": "Map.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -23,6 +23,7 @@
             "scaleInEditor": 1
         },
         "Doors.tsx": {
+            "dynamicWrapping": false,
             "scaleInDock": 1,
             "scaleInEditor": 4
         },
@@ -37,6 +38,14 @@
         "Hills.tsx": {
             "scaleInDock": 2,
             "scaleInEditor": 4
+        },
+        "Map.tmx": {
+            "scale": 2,
+            "selectedLayer": 5,
+            "viewCenter": {
+                "x": 247,
+                "y": 94
+            }
         },
         "Tilled_Dirt.tsx": {
             "scaleInDock": 1.5,
@@ -54,6 +63,10 @@
             "scaleInDock": 3,
             "scaleInEditor": 4
         },
+        "idle_48x48_2.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "безымянный.tmx": {
             "scale": 2,
             "selectedLayer": 2,
@@ -63,14 +76,13 @@
             }
         }
     },
-    "last.imagePath": "C:/other/code/python/Cat-Cafe/Sprite/Objects",
+    "last.imagePath": "C:/Users/anast/OneDrive/Изображения/Modern tiles_Free/Old",
     "map.height": 57,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
     "map.width": 38,
     "openFiles": [
-        "безымянный.tmx",
         "Basic_Grass_Biom_things.tsx",
         "Basic_Furniture.tsx",
         "Doors.tsx",
@@ -80,22 +92,23 @@
         "Tilled_Dirt.tsx",
         "Wooden_House_Walls_Tilset.tsx",
         "Water.tsx",
-        "Wood_Bridge.tsx"
+        "Wood_Bridge.tsx",
+        "Map.tmx"
     ],
     "project": "cat_cafe.tiled-project",
     "recentFiles": [
-        "Wood_Bridge.tsx",
-        "Water.tsx",
-        "Wooden_House_Walls_Tilset.tsx",
-        "Tilled_Dirt.tsx",
-        "Hills.tsx",
-        "Grass.tsx",
-        "Fences.tsx",
-        "Doors.tsx",
-        "Basic_Furniture.tsx",
         "Basic_Grass_Biom_things.tsx",
-        "безымянный.tmx",
-        "Bitmask references gif.tsx"
+        "Basic_Furniture.tsx",
+        "Doors.tsx",
+        "Fences.tsx",
+        "Grass.tsx",
+        "Hills.tsx",
+        "Tilled_Dirt.tsx",
+        "Wooden_House_Walls_Tilset.tsx",
+        "Water.tsx",
+        "Wood_Bridge.tsx",
+        "Map.tmx",
+        "idle_48x48_2.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

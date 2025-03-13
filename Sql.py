@@ -39,7 +39,7 @@ class Database:
             return None, None
 
     def encrypt_password(self, password):
-        """Шифрует пароль с использованием MD5."""
+        """Шифрует пароль с использованием MD5"""
         return hashlib.md5(password.encode()).hexdigest()
 
     def add_player(self, name, email, password, balance=100, day=1):
@@ -67,7 +67,7 @@ class Database:
         return result is not None and len(result) > 0
 
     def close(self):
-        """Закрывает соединение с базой данных."""
+        """Закрывает соединение с базой данных"""
         if self.connection:
             self.connection.close()
             print("Соединение с MySQL закрыто")
