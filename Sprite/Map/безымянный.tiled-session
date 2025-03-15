@@ -1,0 +1,64 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "Map.tmx",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "Все файлы (*)",
+    "fileStates": {
+        "Basic_Furniture.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
+        },
+        "Basic_Grass_Biom_things.tsx": {
+            "scaleInDock": 1
+        },
+        "Doors.tsx": {
+            "scaleInDock": 1
+        },
+        "Fences.tsx": {
+            "scaleInDock": 3
+        },
+        "Grass.tsx": {
+            "scaleInDock": 2
+        },
+        "Hills.tsx": {
+            "scaleInDock": 1
+        },
+        "Map.tmx": {
+            "scale": 2,
+            "selectedLayer": 5,
+            "viewCenter": {
+                "x": 195.5,
+                "y": 168
+            }
+        },
+        "Tilled_Dirt.tsx": {
+            "scaleInDock": 1
+        },
+        "Wooden_House_Walls_Tilset.tsx": {
+            "scaleInDock": 1
+        }
+    },
+    "last.imagePath": "C:/other/code/python/Cat-Cafe/Sprite/Objects",
+    "map.height": 22,
+    "map.tileHeight": 42,
+    "map.tileWidth": 42,
+    "map.width": 15,
+    "openFiles": [
+        "Map.tmx",
+        "Basic_Furniture.tsx"
+    ],
+    "project": "безымянный.tiled-project",
+    "recentFiles": [
+        "Basic_Furniture.tsx",
+        "Map.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
