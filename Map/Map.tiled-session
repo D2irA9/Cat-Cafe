@@ -32,6 +32,10 @@
             "scaleInDock": 3,
             "scaleInEditor": 1
         },
+        "Player.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
+        },
         "Tilled_Dirt.tsx": {
             "scaleInDock": 3,
             "scaleInEditor": 1
@@ -42,7 +46,7 @@
         },
         "map.tmx": {
             "scale": 8,
-            "selectedLayer": -1,
+            "selectedLayer": 0,
             "viewCenter": {
                 "x": 70.1875,
                 "y": 338
@@ -57,7 +61,7 @@
             }
         }
     },
-    "last.imagePath": "C:/other/code/python/Cat-Cafe/Sprite/Objects",
+    "last.imagePath": "C:/other/code/python/Cat-Cafe/Sprite/Player",
     "map.height": 45,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
@@ -68,11 +72,8 @@
         "Hills.tsx",
         "Tilled_Dirt.tsx",
         "Wooden_House_Walls_Tilset.tsx",
-        "Fences.tsx",
-        "Doors.tsx",
-        "Basic_Furniture.tsx",
-        "Basic_Grass_Biom_things.tsx",
-        "map.tmx"
+        "map.tmx",
+        "Player.tsx"
     ],
     "project": "Map.tiled-project",
     "recentFiles": [
@@ -80,11 +81,12 @@
         "Hills.tsx",
         "Tilled_Dirt.tsx",
         "Wooden_House_Walls_Tilset.tsx",
-        "Fences.tsx",
-        "Doors.tsx",
-        "Basic_Furniture.tsx",
-        "Basic_Grass_Biom_things.tsx",
+        "Player.tsx",
         "map.tmx",
+        "Basic_Grass_Biom_things.tsx",
+        "Basic_Furniture.tsx",
+        "Doors.tsx",
+        "Fences.tsx",
         "new_map.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",

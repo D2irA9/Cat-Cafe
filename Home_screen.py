@@ -1,8 +1,18 @@
 import pygame as py
 import sys
+import re
 from Button import Button
 from Sql import Database
 from Game import game
+
+def is_valid_email(email):
+    """Проверки почты"""
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if re.match(email_regex, email):
+        return True
+    else:
+        return False
+
 
 def Home_screen():
     """Начальный экран"""
@@ -75,6 +85,7 @@ def No_button():
     text = "Для начала введи свои данные ;)"
     text_enter = "После заполнения нажмите - Enter"
     text_er = "Все поля должны заполнены"
+    text_er_em = "Некорректная почта"
 
     # Шрифт
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
@@ -82,6 +93,8 @@ def No_button():
     # Инициализация переменной для текста ошибки
     text_er_surf = None
     text_er_rect = None
+    text_er_em_surf = None
+    text_er_em_rect = None
 
     # Подключение к БД
     db = Database()
@@ -98,16 +111,21 @@ def No_button():
                 if active_input != -1:
                     if event.key == py.K_RETURN:
                         if all(input_texts):
-                            # print("Email:", input_texts[0])
-                            # print("Пароль:", input_texts[1])
-                            # print("Имя:", input_texts[2])
-                            db.add_player(input_texts[2], input_texts[0], input_texts[1])
-                            db.close()
-                            input_texts = ['', '', '']
-                            active_input = -1
-                            text_er_surf = None
-                            # Запуск game
-                            game()
+                            if is_valid_email(input_texts[0]):
+                                # print("Email:", input_texts[0])
+                                # print("Пароль:", input_texts[1])
+                                # print("Имя:", input_texts[2])
+                                db.add_player(input_texts[2], input_texts[0], input_texts[1])
+                                db.close()
+                                input_texts = ['', '', '']
+                                active_input = -1
+                                text_er_surf = None
+                                text_er_em_surf = None
+                                # Запуск game
+                                game()
+                            else:
+                                text_er_em_surf = font. render(text_er_em, True, (220, 20, 60))
+                                text_er_em_rect = text_er_em_surf.get_rect(center=(new_screen.get_width() // 2, 850))
                         else:
                             text_er_surf = font.render(text_er, True, (220, 20, 60))
                             text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -138,6 +156,7 @@ def No_button():
 
         # Отрисовка текстовых полей и меток
         labels = ["Email", "Пароль", "Имя"]
+
         for i, box in enumerate(input_boxes):
             # Отрисовка метки
             label_surface = font.render(labels[i], True, BLACK)
@@ -156,6 +175,8 @@ def No_button():
         # Отрисовка текста ошибки, если он существует
         if text_er_surf:
             new_screen.blit(text_er_surf, text_er_rect)
+        if text_er_em_surf:
+            new_screen.blit(text_er_em_surf, text_er_em_rect)
 
         py.display.flip()
 
