@@ -1,6 +1,7 @@
 import pygame as py
 
 class Player(py.sprite.Sprite):
+
     def __init__(self, pos, animations, groups):
         super().__init__(groups)
         self.animations = animations
@@ -13,33 +14,53 @@ class Player(py.sprite.Sprite):
         self.animation_timer = 0
 
     def update(self, dt):
-        keys = py.key.get_pressed()
-        moving = False
-
-        if keys[py.K_LEFT]:
-            self.rect.x -= self.speed
-            moving = True
-            self.current_animation = 'left'  # Устанавливаем анимацию влево
-        elif keys[py.K_RIGHT]:
-            self.rect.x += self.speed
-            moving = True
-            self.current_animation = 'right'  # Устанавливаем анимацию вправо
-        elif keys[py.K_UP]:
-            self.rect.y -= self.speed
-            moving = True
-            self.current_animation = 'forward'  # Устанавливаем анимацию вперед
-        elif keys[py.K_DOWN]:
-            self.rect.y += self.speed
-            moving = True
-            self.current_animation = 'back'  # Устанавливаем анимацию назад
-
-        # Если не движется, устанавливаем анимацию бездействия
-        if not moving:
-            self.current_animation = 'inaction'
-
-        # Обновление анимации
+        """Обновление анимации"""
         self.animation_timer += dt
         if self.animation_timer >= self.animation_speed:
             self.current_image = (self.current_image + 1) % len(self.animations[self.current_animation])
             self.image = self.animations[self.current_animation][self.current_image]
             self.animation_timer = 0
+
+    def start_day(self, screen, tile_group, player):
+        """Функция для движения игрока по заданному пути"""
+
+        # Анимация, путь
+        path = [
+            ("left", 75),
+            ("down", 300),
+            ("left", 50),
+            ("down", 300),
+
+        ]
+        clock = py.time.Clock()
+        for direction, distance in path:
+            moved_distance = 0
+            player.current_animation = direction
+
+            while moved_distance < distance:
+                dt = clock.tick(60) / 1000.0
+
+                if direction == "right":
+                    player.rect.x += player.speed
+                elif direction == "down":
+                    player.rect.y += player.speed
+                elif direction == "left":
+                    player.rect.x -= player.speed
+                elif direction == "up":
+                    player.rect.y -= player.speed
+
+                moved_distance += player.speed
+
+
+                player.update(dt)
+
+                # Рисуем все плитки
+                screen.fill((255, 255, 255))
+                for tile in tile_group:
+                    tile.draw(screen)
+
+                # Рисуем игрока
+                screen.blit(player.image, player.rect)
+                py.display.flip()
+
+        player.current_animation = "inaction"

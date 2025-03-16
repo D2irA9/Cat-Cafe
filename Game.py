@@ -4,6 +4,8 @@ from pytmx.util_pygame import load_pygame
 from Drawing import Tile
 from Player import Player
 from Button import Button
+from Camera import Camera
+
 
 def game():
     """Запуск игры"""
@@ -15,12 +17,9 @@ def game():
     # Загруска карты
     map = load_pygame("Map/map.tmx")
     tile_group = py.sprite.Group()
-    # Группа для игрока
-    # player_group = py.sprite.Group()
+    player_group = py.sprite.Group()
 
-    # Размер плитки
     TILE_SIZE = 16
-    # Коэффициент масштабирования
     scale = 4
 
     for layer in map.visible_layers:
@@ -29,64 +28,77 @@ def game():
                 pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
                 Tile(pos=pos, surf=surf, groups=tile_group, scale=scale)
 
-    # Загрузка изображений спрайта игрока
-    # sprite_sheet = py.image.load("Sprite/Player/Player.png").convert_alpha()
+    camera = Camera(640, 960)
 
-    # Разделение спрайт-листа на анимации
-    # animations = {
-    #     "inaction": [
-    #         py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
-    #         py.transform.scale(sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))
-    #     ],
-    #     "forward": [
-    #         py.transform.scale(sprite_sheet.subsurface((0, 48, 48, 48)), (48 * scale, 48 * scale)),
-    #         py.transform.scale(sprite_sheet.subsurface((144, 48, 48, 48)), (48 * scale, 48 * scale))
-    #     ],
-    #     "back": [
-    #         py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
-    #         py.transform.scale(sprite_sheet.subsurface((144, 0, 48, 48)), (48 * scale, 48 * scale))
-    #     ],
-    #     "left": [
-    #         py.transform.scale(sprite_sheet.subsurface((0, 96, 48, 48)), (48 * scale, 48 * scale)),
-    #         py.transform.scale(sprite_sheet.subsurface((144, 96 , 48, 48)), (48 * scale, 48 * scale))
-    #     ],
-    #     "right": [
-    #         py.transform.scale(sprite_sheet.subsurface((0, 144, 48, 48)), (48 * scale, 48 * scale)),
-    #         py.transform.scale(sprite_sheet.subsurface((144, 144, 48, 48)), (48 * scale, 48 * scale))
-    #     ]
-    # }
+    sprite_sheet = py.image.load("Sprite/Player/Player.png").convert_alpha()
 
-    # Создание игрока
-    # player = Player(pos=(140, 300), animations=animations, groups=player_group)
+    animations = {
+        "inaction": [
+            py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
+            py.transform.scale(sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))
+        ],
+        "up": [
+            py.transform.scale(sprite_sheet.subsurface((0, 48, 48, 48)), (48 * scale, 48 * scale)),
+            py.transform.scale(sprite_sheet.subsurface((144, 48, 48, 48)), (48 * scale, 48 * scale))
+        ],
+        "down": [
+            py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
+            py.transform.scale(sprite_sheet.subsurface((144, 0, 48, 48)), (48 * scale, 48 * scale))
+        ],
+        "left": [
+            py.transform.scale(sprite_sheet.subsurface((0, 96, 48, 48)), (48 * scale, 48 * scale)),
+            py.transform.scale(sprite_sheet.subsurface((144, 96, 48, 48)), (48 * scale, 48 * scale))
+        ],
+        "right": [
+            py.transform.scale(sprite_sheet.subsurface((0, 144, 48, 48)), (48 * scale, 48 * scale)),
+            py.transform.scale(sprite_sheet.subsurface((144, 144, 48, 48)), (48 * scale, 48 * scale))
+        ]
+    }
 
-    # Цвета
+    player = Player(pos=(140, 300), animations=animations, groups=player_group)
+
     WHITE = (255, 255, 255)
 
-    # clock = py.time.Clock()
-    button_start = Button("Начать рабочий день", 135, 560, 350, 100, (0, 0, 0), (255, 218, 185))
+    clock = py.time.Clock()
+    button_start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+
+    camera_moving = False  # Флаг для отслеживания движения камеры
 
     while True:
-        # dt = clock.tick(60) / 1000.0  # Время в секундах с последнего кадра
+        dt = clock.tick(60) / 1000.0
 
         for event in py.event.get():
             if event.type == py.QUIT:
                 py.quit()
                 sys.exit()
+            # Проверка на нажатие
+            if event.type == py.MOUSEBUTTONDOWN and button_start.rect.collidepoint(event.pos):
+                player.start_day(screen, tile_group, player)
+                button_start.visible = False
+                camera_moving = True  # Начинаем движение камеры
 
+        # Обновляем плитки
+        tile_group.update()
 
+        # Обновляем анимацию игрока
+        player.update(dt)
 
-        # Обновляем игрока и плитки
-        tile_group.update()  # Обновление плиток
-        # player_group.update(dt)  # Обновление игрока
-
-        screen.fill(WHITE)  # Очистка экрана
+        # Двигаем камеру, если это необходимо
+        if camera_moving:
+            camera.update(960)  # Двигаем камеру вниз на высоту окна
+            # Проверяем, достигла ли камера целевой позиции
+            if camera.camera.y >= 960:  # Если камера достигла или превысила целевую позицию
+                camera.camera.y = 960  # Устанавливаем её на целевую позицию
+                camera_moving = False  # Останавливаем движение камеры
 
         # Рисуем все плитки
+        screen.fill(WHITE)
         for tile in tile_group:
-            tile.draw(screen)
+            screen.blit(tile.image, camera.apply(tile))
 
-        # # Рисуем игрока
-        # screen.blit(player.image, player.rect)
-        button_start.draw(screen)
-        py.display.flip()  # Обновление экрана
+        # Рисуем игрока
+        screen.blit(player.image, camera.apply(player))
 
+        if button_start.visible:
+            button_start.draw(screen)
+        py.display.flip()
