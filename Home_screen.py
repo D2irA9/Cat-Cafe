@@ -3,7 +3,7 @@ import sys
 import re
 from Button import Button
 from Sql import Database
-from Game import game
+from Game import Game
 
 def is_valid_email(email):
     """Проверки почты"""
@@ -14,15 +14,11 @@ def is_valid_email(email):
         return False
 
 
-def Home_screen():
+def Home_screen(WHITE, BLACK):
     """Начальный экран"""
     py.init()
     screen = py.display.set_mode((600, 900))
     py.display.set_caption("Hi")
-
-    # Цвета
-    WHITE = (255, 255, 255)
-    BLACK = (0, 0, 0)
 
     # Шрифт
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
@@ -122,7 +118,7 @@ def No_button():
                                 text_er_surf = None
                                 text_er_em_surf = None
                                 # Запуск game
-                                game()
+                                Game(WHITE, BLACK)
                             else:
                                 text_er_em_surf = font. render(text_er_em, True, (220, 20, 60))
                                 text_er_em_rect = text_er_em_surf.get_rect(center=(new_screen.get_width() // 2, 850))
@@ -239,7 +235,7 @@ def Yes_button():
                                 active_input = -1
                                 text_er_surf = None
                                 # Запуск game
-                                game()
+                                Game(WHITE, BLACK)
                             else:
                                 text_er_surf = font.render("Неверный email или пароль.", True, (220, 20, 60))
                                 text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))

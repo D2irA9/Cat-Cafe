@@ -7,7 +7,7 @@ from Button import Button
 from Camera import Camera
 
 
-def game():
+def Game(WHITE, BLACK):
     """Запуск игры"""
     py.init()
 
@@ -29,6 +29,7 @@ def game():
                 Tile(pos=pos, surf=surf, groups=tile_group, scale=scale)
 
     camera = Camera(640, 960)
+    camera_moving = False
 
     sprite_sheet = py.image.load("Sprite/Player/Player.png").convert_alpha()
 
@@ -57,13 +58,22 @@ def game():
 
     player = Player(pos=(140, 300), animations=animations, groups=player_group)
 
-    WHITE = (255, 255, 255)
+    # Анимация, путь
+    start = [
+        ("left", 75),
+        ("down", 300),
+        ("left", 50),
+        ("down", 470),
+        ("right", 210),
+    ]
+
+    button_start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+    button_go_store = Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
+    button_go_store.visible = False
+    button_return = Button("Вернуться", 135, 2680, 350, 100, (0, 0, 0), (255, 218, 185))
+    button_open = Button("Открыться", 135, 1720, 350, 100, (0, 0, 0), (244, 164, 96))
 
     clock = py.time.Clock()
-    button_start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
-
-    camera_moving = False  # Флаг для отслеживания движения камеры
-
     while True:
         dt = clock.tick(60) / 1000.0
 
@@ -71,34 +81,35 @@ def game():
             if event.type == py.QUIT:
                 py.quit()
                 sys.exit()
-            # Проверка на нажатие
-            if event.type == py.MOUSEBUTTONDOWN and button_start.rect.collidepoint(event.pos):
-                player.start_day(screen, tile_group, player)
+            if event.type == py.KEYDOWN:
+                if event.key == py.K_LALT or event.key == py.K_RALT:
+                    py.quit()
+                    sys.exit()
+            if button_start.is_clicked() and button_start.visible:
+                camera_moving = True
+                player.moving(screen, tile_group, player, start)
                 button_start.visible = False
-                camera_moving = True  # Начинаем движение камеры
+                button_go_store.visible = True
 
-        # Обновляем плитки
         tile_group.update()
-
-        # Обновляем анимацию игрока
         player.update(dt)
 
-        # Двигаем камеру, если это необходимо
         if camera_moving:
-            camera.update(960)  # Двигаем камеру вниз на высоту окна
-            # Проверяем, достигла ли камера целевой позиции
-            if camera.camera.y >= 960:  # Если камера достигла или превысила целевую позицию
-                camera.camera.y = 960  # Устанавливаем её на целевую позицию
-                camera_moving = False  # Останавливаем движение камеры
+            camera.pos.y += camera.speed
+            if camera.pos.y > 960:
+                camera.pos.y = 960
+                camera_moving = False
 
-        # Рисуем все плитки
         screen.fill(WHITE)
+
         for tile in tile_group:
             screen.blit(tile.image, camera.apply(tile))
 
-        # Рисуем игрока
         screen.blit(player.image, camera.apply(player))
 
         if button_start.visible:
             button_start.draw(screen)
+        if button_open.visible:
+            button_go_store.draw(screen)
+
         py.display.flip()

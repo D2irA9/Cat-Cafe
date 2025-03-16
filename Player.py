@@ -10,7 +10,7 @@ class Player(py.sprite.Sprite):
         self.image = self.animations[self.current_animation][self.current_image]
         self.rect = self.image.get_rect(topleft=pos)
         self.speed = 5
-        self.animation_speed = 0.1
+        self.animation_speed = 0.2
         self.animation_timer = 0
 
     def update(self, dt):
@@ -21,17 +21,9 @@ class Player(py.sprite.Sprite):
             self.image = self.animations[self.current_animation][self.current_image]
             self.animation_timer = 0
 
-    def start_day(self, screen, tile_group, player):
+    def moving(self, screen, tile_group, player, path):
         """Функция для движения игрока по заданному пути"""
 
-        # Анимация, путь
-        path = [
-            ("left", 75),
-            ("down", 300),
-            ("left", 50),
-            ("down", 300),
-
-        ]
         clock = py.time.Clock()
         for direction, distance in path:
             moved_distance = 0
