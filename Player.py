@@ -20,39 +20,3 @@ class Player(py.sprite.Sprite):
             self.current_image = (self.current_image + 1) % len(self.animations[self.current_animation])
             self.image = self.animations[self.current_animation][self.current_image]
             self.animation_timer = 0
-
-    def moving(self, screen, tile_group, player, path):
-        """Функция для движения игрока по заданному пути"""
-
-        clock = py.time.Clock()
-        for direction, distance in path:
-            moved_distance = 0
-            player.current_animation = direction
-
-            while moved_distance < distance:
-                dt = clock.tick(60) / 1000.0
-
-                if direction == "right":
-                    player.rect.x += player.speed
-                elif direction == "down":
-                    player.rect.y += player.speed
-                elif direction == "left":
-                    player.rect.x -= player.speed
-                elif direction == "up":
-                    player.rect.y -= player.speed
-
-                moved_distance += player.speed
-
-
-                player.update(dt)
-
-                # Рисуем все плитки
-                screen.fill((255, 255, 255))
-                for tile in tile_group:
-                    tile.draw(screen)
-
-                # Рисуем игрока
-                screen.blit(player.image, player.rect)
-                py.display.flip()
-
-        player.current_animation = "inaction"

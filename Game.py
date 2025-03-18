@@ -6,7 +6,6 @@ from Player import Player
 from Button import Button
 from Camera import Camera
 
-
 def Game(WHITE, BLACK):
     """Запуск игры"""
     py.init()
@@ -30,6 +29,7 @@ def Game(WHITE, BLACK):
 
     camera = Camera(640, 960)
     camera_moving = False
+    camera_direction = "down"
 
     sprite_sheet = py.image.load("Sprite/Player/Player.png").convert_alpha()
 
@@ -63,8 +63,10 @@ def Game(WHITE, BLACK):
         ("left", 75),
         ("down", 300),
         ("left", 50),
-        ("down", 470),
-        ("right", 210),
+        ("down", 340),
+        ("right", 310),
+        ("down", 110),
+        ("left", 100),
     ]
 
     button_start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
@@ -74,6 +76,12 @@ def Game(WHITE, BLACK):
     button_open = Button("Открыться", 135, 1720, 350, 100, (0, 0, 0), (244, 164, 96))
 
     clock = py.time.Clock()
+
+    # Флаги для управления движением игрока
+    player_moving = False
+    current_path_index = 0
+    moved_distance = 0
+
     while True:
         dt = clock.tick(60) / 1000.0
 
@@ -85,31 +93,56 @@ def Game(WHITE, BLACK):
                 if event.key == py.K_LALT or event.key == py.K_RALT:
                     py.quit()
                     sys.exit()
-            if button_start.is_clicked() and button_start.visible:
+
+            if button_start.is_clicked() and not player_moving:
                 camera_moving = True
-                player.moving(screen, tile_group, player, start)
+                camera_direction = "down"
                 button_start.visible = False
-                button_go_store.visible = True
+                player_moving = True
+
+        if camera_moving:
+            if camera_direction == "down":
+                camera.pos.y += camera.speed
+                if camera.pos.y >= 960:
+                    camera_moving = False
+                    button_go_store.visible = True
+
+        if player_moving and current_path_index < len(start):
+            direction, distance = start[current_path_index]
+            player.current_animation = direction
+
+            if moved_distance < distance:
+                if direction == "right":
+                    player.rect.x += player.speed
+                elif direction == "down":
+                    player.rect.y += player.speed
+                elif direction == "left":
+                    player.rect.x -= player.speed
+                elif direction == "up":
+                    player.rect.y -= player.speed
+
+                moved_distance += player.speed
+            else:
+                moved_distance = 0
+                current_path_index += 1
+
+            if current_path_index >= len(start):
+                player_moving = False
+                player.current_animation = "inaction"
 
         tile_group.update()
         player.update(dt)
 
-        if camera_moving:
-            camera.pos.y += camera.speed
-            if camera.pos.y > 960:
-                camera.pos.y = 960
-                camera_moving = False
-
         screen.fill(WHITE)
-
         for tile in tile_group:
             screen.blit(tile.image, camera.apply(tile))
-
         screen.blit(player.image, camera.apply(player))
 
         if button_start.visible:
             button_start.draw(screen)
-        if button_open.visible:
+        if button_go_store.visible:
             button_go_store.draw(screen)
+        if button_open.visible:
+            button_open.draw(screen)
 
         py.display.flip()
