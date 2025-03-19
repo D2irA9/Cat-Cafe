@@ -4,7 +4,7 @@ from pytmx.util_pygame import load_pygame
 from Drawing import Tile
 from Button import Button
 from Player import Player
-
+from NPS import NPC
 
 def Game():
     """Игра"""
@@ -41,18 +41,25 @@ def Game():
     player = Player((130, 310), scale=4)
     all_sprites = py.sprite.Group(player)
 
+    # NPC
+    npc_path = [(200, 310), (200, 400), (300, 400), (300, 310)]  # Пример маршрута для NPC
+    Lyubava = NPC((200, 310), scale, "Sprite/client/Lyubava.png", npc_path)  # Путь к спрайтам NPC
+    all_sprites.add(Lyubava)  # Добавляем NPC в группу спрайтов
+    sprite_sheet = py.image.load("Sprite/client/Lyubava.png").convert_alpha()
+    print(sprite_sheet.get_size())  # Выведет (96, 96), если размеры правильные
+
     clock = py.time.Clock()
 
     # Состояние игры
     game_states = {
         "is_working_day": False,
         "is_market_day": False,
-        "start_button_completed": False,  # Флаг завершения логики первой кнопки
+        "start_button_completed": False,
         "camera_y": 0,
-        "target_camera_y": 960,  # Смещение для первой кнопки
-        "target_camera_y_market": 1920,  # Смещение для второй кнопки
-        "player_path": [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)],  # Путь в кафе
-        "player_path_market": [(250, 1070), (450, 1070), (450, 2080), (230, 2080)],  # Путь на рынок
+        "target_camera_y": 960,
+        "target_camera_y_market": 1920,
+        "player_path": [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)],
+        "player_path_market": [(250, 1070), (450, 1070), (450, 2080), (230, 2080)],
         "current_path_index": 0
     }
 
@@ -87,21 +94,21 @@ def Game():
             if event.type == py.MOUSEBUTTONDOWN:
                 if not game_states["start_button_completed"] and not game_states["is_market_day"] and start.is_clicked(event.pos):
                     game_states["is_working_day"] = True
-                    game_states["current_path_index"] = 0  # Сброс индекса пути для первой кнопки
+                    game_states["current_path_index"] = 0
                 elif game_states["start_button_completed"] and not game_states["is_market_day"] and go_to_market.is_clicked(event.pos):
                     game_states["is_market_day"] = True
-                    game_states["current_path_index"] = 0  # Сброс индекса пути для второй кнопки
+                    game_states["current_path_index"] = 0
 
         if game_states["is_working_day"]:
             if handle_movement(player, game_states["player_path"], game_states["camera_y"], game_states["target_camera_y"]):
                 game_states["is_working_day"] = False
                 game_states["start_button_completed"] = True
-                player.direction = "inaction"  # Сброс анимации на "inaction"
+                player.direction = "inaction"
 
         elif game_states["is_market_day"]:
             if handle_movement(player, game_states["player_path_market"], game_states["camera_y"], game_states["target_camera_y_market"]):
-                game_states["is_market_day"] = False  # Завершение логики второй кнопки
-                player.direction = "inaction"  # Сброс анимации на "inaction"
+                game_states["is_market_day"] = False
+                player.direction = "inaction"
 
         all_sprites.update()
 
