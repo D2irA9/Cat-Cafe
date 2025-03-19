@@ -5,6 +5,7 @@ from Drawing import Tile
 from Button import Button
 from Player import Player
 
+
 def Game():
     """Игра"""
     py.init()
@@ -32,9 +33,6 @@ def Game():
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
 
-    # Шрифт
-    font = py.font.Font("Font/PixelizerBold.ttf", 36)
-
     start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
 
     # Игрок
@@ -43,18 +41,48 @@ def Game():
 
     clock = py.time.Clock()
 
+    # Состояние игры
+    is_working_day = False
+    camera_y = 0
+    target_camera_y = 960
+    player_path = [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)]  # Пример пути
+    current_path_index = 0
+
     while True:
         for event in py.event.get():
             if event.type == py.QUIT:
                 py.quit()
                 sys.exit()
+            if event.type == py.MOUSEBUTTONDOWN:
+                if start.is_clicked(event.pos):
+                    is_working_day = True
 
+        if is_working_day:
+            if current_path_index < len(player_path):
+                target_x, target_y = player_path[current_path_index]
+                if player.rect.x < target_x:
+                    player.move("right")
+                elif player.rect.x > target_x:
+                    player.move("left")
+                elif player.rect.y < target_y:
+                    player.move("down")
+                elif player.rect.y > target_y:
+                    player.move("up")
+                else:
+                    current_path_index += 1
+            else:
+                if camera_y < target_camera_y:
+                    camera_y += 5
 
         all_sprites.update()
 
         screen.fill(WHITE)
-        tile_group.draw(screen)
-        all_sprites.draw(screen)
+
+        # Отрисовка с учетом смещения камеры
+        for tile in tile_group:
+            screen.blit(tile.image, (tile.rect.x, tile.rect.y - camera_y))
+        for sprite in all_sprites:
+            screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y - camera_y))
 
         start.draw(screen)
 

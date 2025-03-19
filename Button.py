@@ -5,7 +5,7 @@ class Button:
         self.image = py.Surface((width, height))
         self.image.fill(bg_color)
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.font = py.font.Font(None, 36)
+        self.font = py.font.Font("Font/PixelizerBold.ttf",  36)
         self.text_surface = self.font.render(text, True, text_color)
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
 
