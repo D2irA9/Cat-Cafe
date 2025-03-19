@@ -24,7 +24,6 @@ def Home_screen():
         for event in py.event.get():
             if event.type == py.QUIT:
                 py.quit()
-                sys.exit()
 
         if button_yes.is_clicked():
             Yes_button(WHITE, BLACK, font)
