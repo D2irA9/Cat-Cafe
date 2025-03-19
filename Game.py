@@ -33,7 +33,9 @@ def Game():
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
 
+    # Кнопки
     start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+    go_to_market = Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
 
     # Игрок
     player = Player((130, 310), scale=4)
@@ -43,9 +45,13 @@ def Game():
 
     # Состояние игры
     is_working_day = False
+    is_market_day = False
+    start_button_completed = False  # Флаг завершения логики первой кнопки
     camera_y = 0
-    target_camera_y = 960
-    player_path = [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)]  # Пример пути
+    target_camera_y = 960  # Смещение для первой кнопки
+    target_camera_y_market = 1920  # Смещение для второй кнопки
+    player_path = [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)]  # Путь для первой кнопки
+    player_path_market = [(250, 1070), (450, 1070), (450, 2080), (230, 2080)]  # Путь для второй кнопки
     current_path_index = 0
 
     while True:
@@ -54,10 +60,15 @@ def Game():
                 py.quit()
                 sys.exit()
             if event.type == py.MOUSEBUTTONDOWN:
-                if start.is_clicked(event.pos):
+                if not start_button_completed and not is_market_day and start.is_clicked(event.pos):
                     is_working_day = True
+                    current_path_index = 0  # Сброс индекса пути для первой кнопки
+                elif start_button_completed and not is_market_day and go_to_market.is_clicked(event.pos):
+                    is_market_day = True
+                    current_path_index = 0  # Сброс индекса пути для второй кнопки
 
         if is_working_day:
+            # Движение игрока
             if current_path_index < len(player_path):
                 target_x, target_y = player_path[current_path_index]
                 if player.rect.x < target_x:
@@ -70,9 +81,40 @@ def Game():
                     player.move("up")
                 else:
                     current_path_index += 1
-            else:
-                if camera_y < target_camera_y:
-                    camera_y += 5
+
+            # Движение камеры
+            if camera_y < target_camera_y:
+                camera_y += 5
+
+            # Проверка завершения логики
+            if current_path_index >= len(player_path) and camera_y >= target_camera_y:
+                is_working_day = False
+                start_button_completed = True
+                player.direction = "inaction"  # Сброс анимации на "inaction"
+
+        elif is_market_day:
+            # Движение игрока
+            if current_path_index < len(player_path_market):
+                target_x, target_y = player_path_market[current_path_index]
+                if player.rect.x < target_x:
+                    player.move("right")
+                elif player.rect.x > target_x:
+                    player.move("left")
+                elif player.rect.y < target_y:
+                    player.move("down")
+                elif player.rect.y > target_y:
+                    player.move("up")
+                else:
+                    current_path_index += 1
+
+            # Движение камеры
+            if camera_y < target_camera_y_market:
+                camera_y += 5
+
+            # Проверка завершения логики
+            if current_path_index >= len(player_path_market) and camera_y >= target_camera_y_market:
+                is_market_day = False  # Завершение логики второй кнопки
+                player.direction = "inaction"  # Сброс анимации на "inaction"
 
         all_sprites.update()
 
@@ -84,7 +126,11 @@ def Game():
         for sprite in all_sprites:
             screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y - camera_y))
 
-        start.draw(screen)
+        # Отрисовка кнопки в зависимости от состояния
+        if not start_button_completed and not is_market_day:
+            start.draw(screen)
+        elif start_button_completed and not is_market_day:
+            go_to_market.draw(screen)
 
         py.display.flip()
         clock.tick(60)

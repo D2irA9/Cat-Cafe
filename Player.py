@@ -38,12 +38,13 @@ class Player(py.sprite.Sprite):
     def update(self):
         """Обновление анимации"""
         now = py.time.get_ticks()
-        if now - self.last_update > 100:
+        if now - self.last_update > 100:  # Задержка между кадрами анимации
             self.frame_index = (self.frame_index + 1) % len(self.animations[self.direction])
             self.image = self.animations[self.direction][self.frame_index]
             self.last_update = now
 
     def move(self, direction):
+        """Движение игрока и изменение анимации"""
         if direction == "up":
             self.rect.y -= 5
             self.direction = "up"
