@@ -52,19 +52,22 @@ def No_button(WHITE, BLACK, font):
     new_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Регистрация")
 
-    # Вод текста
+    # Ввод текста
     input_boxes = [
-        py.Rect(75, 300, 450, 70),
-        py.Rect(75, 450, 450, 70),
-        py.Rect(75, 600, 450, 70)
+        py.Rect(75, 300, 450, 70), # Email
+        py.Rect(75, 450, 450, 70), # Пароль
+        py.Rect(75, 600, 450, 70)  # Имя
     ]
-    # Хранения введенного текста
     input_texts = ['', '', '']
     active_input = -1
     color_inactive = py.Color('lightskyblue3')
     color_active = py.Color('dodgerblue2')
 
-    # Инициализация переменной для текста ошибки
+    # Позиция курсора
+    cursor_position = 0
+    cursor_visible = True
+    cursor_timer = 0
+
     text_er_surf = None
     text_er_rect = None
 
@@ -89,21 +92,39 @@ def No_button(WHITE, BLACK, font):
                             db.close()
                             input_texts = ['', '', '']
                             active_input = -1
+                            cursor_position = 0
                             text_er_surf = None
+                            # Если все хорошо, то игра запускается
+
                         else:
-                            text_er_surf = font.render("Все поля должны заполнены", True, (220, 20, 60))
+                            text_er_surf = font.render("Все поля должны быть заполнены", True, (220, 20, 60))
                             text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
 
                     elif event.key == py.K_BACKSPACE:
-                        input_texts[active_input] = input_texts[active_input][:-1]
+                        if cursor_position > 0:
+                            input_texts[active_input] = (input_texts[active_input][:cursor_position - 1] +
+                                                          input_texts[active_input][cursor_position:])
+                            cursor_position -= 1
+                    elif event.key == py.K_DELETE:
+                        if cursor_position < len(input_texts[active_input]):
+                            input_texts[active_input] = (input_texts[active_input][:cursor_position] +
+                                                          input_texts[active_input][cursor_position + 1:])
+                    elif event.key == py.K_LEFT:
+                        cursor_position = max(0, cursor_position - 1)
+                    elif event.key == py.K_RIGHT:
+                        cursor_position = min(len(input_texts[active_input]), cursor_position + 1)
                     else:
-                        input_texts[active_input] += event.unicode
+                        input_texts[active_input] = (input_texts[active_input][:cursor_position] +
+                                                      event.unicode +
+                                                      input_texts[active_input][cursor_position:])
+                        cursor_position += 1
 
             # Обработка клика мыши для активации полей ввода
             if event.type == py.MOUSEBUTTONDOWN:
                 for i, box in enumerate(input_boxes):
                     if box.collidepoint(event.pos):
                         active_input = i
+                        cursor_position = len(input_texts[i])  # Устанавливаем курсор в конец текста
                 if active_input == -1 and not any(box.collidepoint(event.pos) for box in input_boxes):
                     active_input = -1
 
@@ -115,7 +136,7 @@ def No_button(WHITE, BLACK, font):
         new_screen.blit(text_surf, text_rect)
 
         text_enter_surf = font.render("После заполнения нажмите - Enter", True, BLACK)
-        text_enter_rect = text_enter_surf.get_rect(center=(new_screen.get_width()//2, 100))
+        text_enter_rect = text_enter_surf.get_rect(center=(new_screen.get_width() // 2, 100))
         new_screen.blit(text_enter_surf, text_enter_rect)
 
         # Отрисовка текстовых полей и меток
@@ -134,15 +155,26 @@ def No_button(WHITE, BLACK, font):
             text_surface = font.render(input_texts[i], True, BLACK)
             new_screen.blit(text_surface, (box.x + 5, box.y + 5))
 
+            # Отображение курсора
+            if i == active_input and cursor_visible:
+                cursor_x = box.x + 5 + font.size(input_texts[i][:cursor_position])[0]
+                cursor_y = box.y + 5
+                py.draw.line(new_screen, BLACK, (cursor_x, cursor_y), (cursor_x, cursor_y + 30), 2)
+
         # Отрисовка текста ошибки
         if text_er_surf:
             new_screen.blit(text_er_surf, text_er_rect)
 
+        # Управление видимостью курсора
+        cursor_timer += 1
+        if cursor_timer >= 30:  # Каждые 30 кадров переключаем видимость курсора
+            cursor_visible = not cursor_visible
+            cursor_timer = 0
+
         py.display.flip()
 
-
 def Yes_button(WHITE, BLACK, font):
-    """Если выброно да"""
+    """Если выбрано да"""
     py.init()
     new_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Вход")
@@ -152,11 +184,15 @@ def Yes_button(WHITE, BLACK, font):
         py.Rect(75, 300, 450, 70),  # Email
         py.Rect(75, 450, 450, 70),  # Пароль
     ]
-    # Список для хранения введенного текста
     input_texts = ['', '']
     active_input = -1
     color_inactive = py.Color('lightskyblue3')
     color_active = py.Color('dodgerblue2')
+
+    # Позиция курсора
+    cursor_position = 0
+    cursor_visible = True
+    cursor_timer = 0
 
     text_er_surf = None
     text_er_rect = None
@@ -185,9 +221,9 @@ def Yes_button(WHITE, BLACK, font):
                                 print("Успешный вход в аккаунт!")
                                 input_texts = ['', '']
                                 active_input = -1
+                                cursor_position = 0
                                 text_er_surf = None
                                 # Если все хорошо, то игра запускается
-
                             else:
                                 text_er_surf = font.render("Неверный email или пароль.", True, (220, 20, 60))
                                 text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -197,15 +233,30 @@ def Yes_button(WHITE, BLACK, font):
                             text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
 
                     elif event.key == py.K_BACKSPACE:
-                        input_texts[active_input] = input_texts[active_input][:-1]
+                        if cursor_position > 0:
+                            input_texts[active_input] = (input_texts[active_input][:cursor_position - 1] +
+                                                          input_texts[active_input][cursor_position:])
+                            cursor_position -= 1
+                    elif event.key == py.K_DELETE:
+                        if cursor_position < len(input_texts[active_input]):
+                            input_texts[active_input] = (input_texts[active_input][:cursor_position] +
+                                                          input_texts[active_input][cursor_position + 1:])
+                    elif event.key == py.K_LEFT:
+                        cursor_position = max(0, cursor_position - 1)
+                    elif event.key == py.K_RIGHT:
+                        cursor_position = min(len(input_texts[active_input]), cursor_position + 1)
                     else:
-                        input_texts[active_input] += event.unicode
+                        input_texts[active_input] = (input_texts[active_input][:cursor_position] +
+                                                      event.unicode +
+                                                      input_texts[active_input][cursor_position:])
+                        cursor_position += 1
 
             # Обработка клика мыши для активации полей ввода
             if event.type == py.MOUSEBUTTONDOWN:
                 for i, box in enumerate(input_boxes):
                     if box.collidepoint(event.pos):
                         active_input = i
+                        cursor_position = len(input_texts[i])  # Устанавливаем курсор в конец текста
                 if active_input == -1 and not any(box.collidepoint(event.pos) for box in input_boxes):
                     active_input = -1
 
@@ -236,9 +287,21 @@ def Yes_button(WHITE, BLACK, font):
             text_surface = font.render(input_texts[i], True, BLACK)
             new_screen.blit(text_surface, (box.x + 5, box.y + 5))
 
+            # Отображение курсора
+            if i == active_input and cursor_visible:
+                cursor_x = box.x + 5 + font.size(input_texts[i][:cursor_position])[0]
+                cursor_y = box.y + 5
+                py.draw.line(new_screen, BLACK, (cursor_x, cursor_y), (cursor_x, cursor_y + 30), 2)
+
         # Отрисовка текста ошибки
         if text_er_surf:
             new_screen.blit(text_er_surf, text_er_rect)
+
+        # Управление видимостью курсора
+        cursor_timer += 1
+        if cursor_timer >= 30:  # Каждые 30 кадров переключаем видимость курсора
+            cursor_visible = not cursor_visible
+            cursor_timer = 0
 
         py.display.flip()
 
