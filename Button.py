@@ -5,19 +5,20 @@ class Button:
     def __init__(self, text, x, y, width, height, text_color, hover_color):
         self.rect = py.Rect(x, y, width, height)
         self.text_color = text_color
-        self. hover_color = hover_color
+        self.hover_color = hover_color
         self.text = text
         self.font = py.font.Font("Font/PixelizerBold.ttf", 36)
+        self.visible = True  # Добавляем атрибут видимости
 
     def draw(self, surface):
         """Приверка на наведение мыши"""
-        mouse_pos = py.mouse.get_pos()
-        if self.rect.collidepoint(mouse_pos):
-            py.draw.rect(surface, self.hover_color, self.rect)
-        else:
-            py.draw.rect(surface, self.hover_color, self.rect)
+        if not self.visible:
+            return
 
-        #Отображение текста на кпопке
+        mouse_pos = py.mouse.get_pos()
+        py.draw.rect(surface, self.hover_color, self.rect)
+
+        # Отображение текста на кнопке
         text_surface = self.font.render(self.text, True, self.text_color)
         text_rest = text_surface.get_rect(center=self.rect.center)
         surface.blit(text_surface, text_rest)
