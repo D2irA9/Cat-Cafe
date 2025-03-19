@@ -127,10 +127,11 @@ def Game():
             screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y - camera_y))
 
         # Отрисовка кнопки в зависимости от состояния
-        if not start_button_completed and not is_market_day:
+        if not is_working_day and not is_market_day and not start_button_completed:
             start.draw(screen)
         elif start_button_completed and not is_market_day:
             go_to_market.draw(screen)
 
         py.display.flip()
         clock.tick(60)
+
