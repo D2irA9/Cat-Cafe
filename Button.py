@@ -12,14 +12,11 @@ class Button:
 
     def draw(self, surface):
         """Приверка на наведение мыши"""
-        if not self.visible:  # Если кнопка не видима, ничего не рисуем
+        if not self.visible:
             return
 
         mouse_pos = py.mouse.get_pos()
-        if self.rect.collidepoint(mouse_pos):
-            py.draw.rect(surface, self.hover_color, self.rect)
-        else:
-            py.draw.rect(surface, self.hover_color, self.rect)
+        py.draw.rect(surface, self.hover_color, self.rect)
 
         # Отображение текста на кнопке
         text_surface = self.font.render(self.text, True, self.text_color)

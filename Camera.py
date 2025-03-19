@@ -23,7 +23,4 @@ class Camera:
                 self.pos.y = target_y
 
         # Ограничиваем движение камеры
-        if self.pos.y < 0:
-            self.pos.y = 0
-        if self.pos.y > self.height - self.pos.height:
-            self.pos.y = self.height - self.pos.height
+        self.pos.y = max(0, min(self.pos.y, self.height - self.pos.height))

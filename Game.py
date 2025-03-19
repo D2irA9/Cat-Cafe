@@ -29,58 +29,45 @@ def Game(WHITE, BLACK):
 
     camera = Camera(640, 960)
     camera_moving = False
-    camera_direction = "down"
+    camera_target_y = 0  # Целевая позиция камеры
 
     sprite_sheet = py.image.load("Sprite/Player/Player.png").convert_alpha()
-
     animations = {
-        "inaction": [
-            py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
-            py.transform.scale(sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))
-        ],
-        "up": [
-            py.transform.scale(sprite_sheet.subsurface((0, 48, 48, 48)), (48 * scale, 48 * scale)),
-            py.transform.scale(sprite_sheet.subsurface((144, 48, 48, 48)), (48 * scale, 48 * scale))
-        ],
-        "down": [
-            py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
-            py.transform.scale(sprite_sheet.subsurface((144, 0, 48, 48)), (48 * scale, 48 * scale))
-        ],
-        "left": [
-            py.transform.scale(sprite_sheet.subsurface((0, 96, 48, 48)), (48 * scale, 48 * scale)),
-            py.transform.scale(sprite_sheet.subsurface((144, 96, 48, 48)), (48 * scale, 48 * scale))
-        ],
-        "right": [
-            py.transform.scale(sprite_sheet.subsurface((0, 144, 48, 48)), (48 * scale, 48 * scale)),
-            py.transform.scale(sprite_sheet.subsurface((144, 144, 48, 48)), (48 * scale, 48 * scale))
-        ]
+        "inaction": [py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
+                     py.transform.scale(sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))],
+        "up": [py.transform.scale(sprite_sheet.subsurface((0, 48, 48, 48)), (48 * scale, 48 * scale)),
+               py.transform.scale(sprite_sheet.subsurface((144, 48, 48, 48)), (48 * scale, 48 * scale))],
+        "down": [py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
+                 py.transform.scale(sprite_sheet.subsurface((144, 0, 48, 48)), (48 * scale, 48 * scale))],
+        "left": [py.transform.scale(sprite_sheet.subsurface((0, 96, 48, 48)), (48 * scale, 48 * scale)),
+                 py.transform.scale(sprite_sheet.subsurface((144, 96, 48, 48)), (48 * scale, 48 * scale))],
+        "right": [py.transform.scale(sprite_sheet.subsurface((0, 144, 48, 48)), (48 * scale, 48 * scale)),
+                  py.transform.scale(sprite_sheet.subsurface((144, 144, 48, 48)), (48 * scale, 48 * scale))]
     }
 
     player = Player(pos=(140, 300), animations=animations, groups=player_group)
 
-    # Анимация, путь
-    start = [
-        ("left", 75),
-        ("down", 300),
-        ("left", 50),
-        ("down", 340),
-        ("right", 310),
-        ("down", 110),
-        ("left", 100),
-    ]
+    # Пути для игрока
+    paths = {
+        "start": [("left", 75), ("down", 300), ("left", 50), ("down", 340), ("right", 310), ("down", 110), ("left", 100)],
+        "go_store": [("right", 100), ("down", 400), ("left", 150), ("down", 300)]
+    }
 
-    button_start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
-    button_go_store = Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
-    button_go_store.visible = False
-    button_return = Button("Вернуться", 135, 2680, 350, 100, (0, 0, 0), (255, 218, 185))
-    button_open = Button("Открыться", 135, 1720, 350, 100, (0, 0, 0), (244, 164, 96))
+    buttons = {
+        "start": Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185)),
+        "go_store": Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152)),
+        "return": Button("Вернуться", 135, 2680, 350, 100, (0, 0, 0), (255, 218, 185)),
+        "open": Button("Открыться", 135, 1720, 350, 100, (0, 0, 0), (244, 164, 96))
+    }
+    buttons["go_store"].visible = False
 
     clock = py.time.Clock()
 
-    # Флаги для управления движением игрока
+    # Флаги для управления движением игрока и камеры
     player_moving = False
     current_path_index = 0
     moved_distance = 0
+    current_path = []  # Текущий путь игрока
 
     while True:
         dt = clock.tick(60) / 1000.0
@@ -89,26 +76,36 @@ def Game(WHITE, BLACK):
             if event.type == py.QUIT:
                 py.quit()
                 sys.exit()
-            if event.type == py.KEYDOWN:
-                if event.key == py.K_LALT or event.key == py.K_RALT:
-                    py.quit()
-                    sys.exit()
+            if event.type == py.KEYDOWN and event.key in (py.K_LALT, py.K_RALT):
+                py.quit()
+                sys.exit()
 
-            if button_start.is_clicked() and not player_moving:
-                camera_moving = True
-                camera_direction = "down"
-                button_start.visible = False
-                player_moving = True
+            if buttons["start"].is_clicked() and not player_moving:
+                camera_moving, camera_target_y = True, 960
+                buttons["start"].visible = False
+                player_moving, current_path = True, paths["start"]
+                current_path_index, moved_distance = 0, 0
 
+            if buttons["go_store"].is_clicked() and not player_moving:
+                camera_moving, camera_target_y = True, 1920  # Устанавливаем целевую позицию камеры
+                buttons["go_store"].visible = False  # Скрываем кнопку после нажатия
+                player_moving, current_path = True, paths["go_store"]
+                current_path_index, moved_distance = 0, 0
+
+        # Движение камеры
         if camera_moving:
-            if camera_direction == "down":
-                camera.pos.y += camera.speed
-                if camera.pos.y >= 960:
-                    camera_moving = False
-                    button_go_store.visible = True
+            camera.pos.y += camera.speed
+            if camera.pos.y >= camera_target_y:
+                camera.pos.y = camera_target_y  # Устанавливаем позицию камеры на целевую
+                camera_moving = False
+                if camera_target_y == 960:
+                    buttons["go_store"].visible = True  # Показываем кнопку "Идти на рынок"
+                elif camera_target_y == 1920:
+                    buttons["return"].visible = True  # Показываем кнопку "Вернуться"
 
-        if player_moving and current_path_index < len(start):
-            direction, distance = start[current_path_index]
+        # Движение игрока
+        if player_moving and current_path_index < len(current_path):
+            direction, distance = current_path[current_path_index]
             player.current_animation = direction
 
             if moved_distance < distance:
@@ -123,26 +120,25 @@ def Game(WHITE, BLACK):
 
                 moved_distance += player.speed
             else:
-                moved_distance = 0
-                current_path_index += 1
+                moved_distance, current_path_index = 0, current_path_index + 1
 
-            if current_path_index >= len(start):
+            if current_path_index >= len(current_path):
                 player_moving = False
                 player.current_animation = "inaction"
 
+        # Обновление спрайтов
         tile_group.update()
         player.update(dt)
 
+        # Отрисовка
         screen.fill(WHITE)
         for tile in tile_group:
             screen.blit(tile.image, camera.apply(tile))
         screen.blit(player.image, camera.apply(player))
 
-        if button_start.visible:
-            button_start.draw(screen)
-        if button_go_store.visible:
-            button_go_store.draw(screen)
-        if button_open.visible:
-            button_open.draw(screen)
+        # Отрисовка кнопок
+        for button in buttons.values():
+            if button.visible:
+                button.draw(screen)
 
         py.display.flip()
