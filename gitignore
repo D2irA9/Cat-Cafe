@@ -1,0 +1,10 @@
+.venv/
+Font/
+Map/
+pygame/
+pygame-2.6.1.dist-info/
+pymysql/
+PyMySQL-1.1.1.dist-info/
+pytmx/
+PyTMX-3.32.dist-info/
+Test.py

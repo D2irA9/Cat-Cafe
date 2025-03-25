@@ -38,6 +38,102 @@ class Database:
             print(f"Ошибка '{e}' при выполнении запроса: {query}")
             return None, None
 
+    def add_MenuClient(self):
+        """Добавления записи"""
+        query_menu = "INSERT INTO `menu` (id, name, price) VALUES (%s, %s, %s);"
+        menu_items = [
+            (1, "Pasta", 51),
+            (2, "Tacos", 17),
+            (3, "Ramen", 33),
+            (4, "Hamburg", 29),
+            (5, "Pizza", 41),
+            (6, "Rolls", 31),
+            (7, "Soup", 19),
+            (8, "Fried_egg", 11),
+            (9, "Water", 5),
+            (10, "Cocoa", 16),
+            (11, "Tea", 12),
+            (12, "Milkshake", 20),
+            (13, "Coffee", 17),
+            (14, "Cocktail", 18),
+            (15, "Lemonade", 15),
+            (16, "Soda", 15),
+            (17, "Cupcake", 19),
+            (18, "Cheesecake", 23),
+            (19, "Cake", 25),
+            (20, "Ice_cream", 25),
+            (21, "Pie", 30)
+        ]
+        query_client = "INSERT INTO `client` (id, name, preferences) VALUES (%s, %s, %s);"
+        client_items = [
+            (1, "Lyubava", 12),
+            (2, "Panteleimon", 3),
+            (3, "Vasiliy", 19),
+            (4, "Khariton", 7),
+            (5, "Nona", 20),
+            (6, "Yevsey", 17),
+            (7, "Kostya", 21),
+            (8, "Viola", 6)
+        ]
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.executemany(query_menu, menu_items)
+                print(f"{cursor.rowcount} записей успешно добавлено в меню.")
+
+                cursor.executemany(query_client, client_items)
+                print(f"{cursor.rowcount} записей успешно добавлено в клиентов.")
+
+                self.connection.commit()
+        except pymysql.MySQLError as e:
+            print(f"Ошибка '{e}' при добавлении записей.")
+
+
+    def creating_tables(self):
+        """Создание таблиц"""
+        create_player_table_quey = """CREATE TABLE IF NOT EXISTS `player`( 
+            `id` INT NOT NULL AUTO_INCREMENT,            
+            `name` VARCHAR(100) NOT NULL,
+            `day` INT NOT NULL,
+            `balance` INT NOT NULL,
+            `email` VARCHAR(255) NOT NULL,
+            `password` VARCHAR(255) NOT NULL,
+            `regist_date` DATE NOT NULL,
+            PRIMARY KEY (`id`) USING BTREE
+        );"""
+        create_menu_table_quey = """CREATE TABLE IF NOT EXISTS `menu` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `name` VARCHAR(100) NOT NULL,
+            `price` INT NOT NULL,
+            PRIMARY KEY (`id`) USING BTREE
+            );"""
+        create_client_table_quey = """CREATE TABLE IF NOT EXISTS `client` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `name` VARCHAR(100) NOT NULL,
+            `preferences` INT NOT NULL,
+            PRIMARY KEY (`id`) USING BTREE,
+            INDEX `preferences` (`preferences`) USING BTREE,
+            CONSTRAINT `preferences` FOREIGN KEY (`preferences`) REFERENCES `menu` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+        );"""
+        create_orders_table_quey = """CREATE TABLE IF NOT EXISTS `orders` (
+            `id` INT NOT NULL,
+            `player_id` INT NOT NULL,
+            `client_id` INT NOT NULL,
+            `dish_id` INT NOT NULL,
+            PRIMARY KEY (`id`) USING BTREE,
+            INDEX `player_id` (`player_id`) USING BTREE,
+            INDEX `client_id` (`client_id`) USING BTREE,
+            INDEX `dish_id` (`dish_id`) USING BTREE,
+            CONSTRAINT `client_id` FOREIGN KEY (`client_id`) REFERENCES `client` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+            CONSTRAINT `dish_id` FOREIGN KEY (`dish_id`) REFERENCES `menu` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+            CONSTRAINT `player_id` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+        );"""
+        self.execute_query(create_player_table_quey)
+        self.execute_query(create_menu_table_quey)
+        self.execute_query(create_client_table_quey)
+        self.execute_query(create_orders_table_quey)
+        print("Таблицы созданы или уже существуют")
+        self.add_MenuClient()
+
     def encrypt_password(self, password):
         """Шифрует пароль с использованием MD5."""
         return hashlib.md5(password.encode()).hexdigest()

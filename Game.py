@@ -5,6 +5,10 @@ from Drawing import Tile
 from Button import Button
 from Player import Player
 from NPS import NPC
+import random
+
+def random():
+    pass
 
 def Game():
     """Игра"""
@@ -36,17 +40,43 @@ def Game():
     # Кнопки
     start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
     go_to_market = Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
+    Breturn = Button("Вернутся", 135, 760, 350, 100, (0, 0, 0), py.Color("PaleGreen3"))
 
     # Игрок
     player = Player((130, 310), scale=4)
     all_sprites = py.sprite.Group(player)
 
     # NPC
-    npc_path = [(200, 310), (200, 400), (300, 400), (300, 310)]  # Пример маршрута для NPC
-    Lyubava = NPC((200, 310), scale, "Sprite/client/Lyubava.png", npc_path)  # Путь к спрайтам NPC
-    all_sprites.add(Lyubava)  # Добавляем NPC в группу спрайтов
-    sprite_sheet = py.image.load("Sprite/client/Lyubava.png").convert_alpha()
-    print(sprite_sheet.get_size())  # Выведет (96, 96), если размеры правильные
+    npc_path = [
+            [(-24, 1750), (640, 1750), (-24, 1750)],
+            [(640, 1750), (-24, 1750), (640, 1750)],
+            [(-24, 1740), (640, 1740), (-24, 1740)],
+            [(640, 1740), (-24, 1740), (640, 1740)],
+            [(-24, 1730), (640, 1730), (-24, 1730)],
+            [(640, 1730), (-24, 1730), (640, 1730)],
+    ]
+    nps_pos = [
+        (-24, 1750),
+        (640, 1750),
+        (-24, 1740),
+        (640, 1740),
+        (-24, 1730),
+        (640, 1730)
+    ]
+
+    Lyubava = NPC(nps_pos[0], scale, "Sprite/client/Lyubava.png", npc_path[0])
+    Khariton = NPC(nps_pos[1], scale, "Sprite/client/Khariton.png", npc_path[1])
+    Nona = NPC(nps_pos[2], scale, "Sprite/client/Nona.png", npc_path[2])
+    Panteleimon = NPC(nps_pos[3], scale, "Sprite/client/Panteleimon.png", npc_path[3])
+    Vasiliy = NPC(nps_pos[4], scale, "Sprite/client/Vasiliy.png", npc_path[4])
+    Yevsey = NPC(nps_pos[5], scale, "Sprite/client/Yevsey.png", npc_path[5])
+
+    all_sprites.add(Lyubava)
+    all_sprites.add(Khariton)
+    all_sprites.add(Nona)
+    all_sprites.add(Panteleimon)
+    all_sprites.add(Vasiliy)
+    all_sprites.add(Yevsey)
 
     clock = py.time.Clock()
 
@@ -60,7 +90,8 @@ def Game():
         "target_camera_y_market": 1920,
         "player_path": [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)],
         "player_path_market": [(250, 1070), (450, 1070), (450, 2080), (230, 2080)],
-        "current_path_index": 0
+        "current_path_index": 0,
+
     }
 
     def handle_movement(player, path, camera_y, target_camera_y):

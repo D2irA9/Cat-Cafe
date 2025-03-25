@@ -7,31 +7,31 @@ class NPC(py.sprite.Sprite):
         self.sprite_sheet = py.image.load(sprite_sheet_path).convert_alpha()
         self.animations = {
             "inaction": [
-                py.transform.scale(self.sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
-                py.transform.scale(self.sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))
+                py.transform.scale(self.sprite_sheet.subsurface((24, 0, 24, 24)), (24 * scale, 24 * scale)),
+                py.transform.scale(self.sprite_sheet.subsurface((24, 0, 24, 24)), (24 * scale, 24 * scale))
             ],
             "up": [
-                py.transform.scale(self.sprite_sheet.subsurface((0, 48, 48, 48)), (48 * scale, 48 * scale)),
-                py.transform.scale(self.sprite_sheet.subsurface((48, 48, 48, 48)), (48 * scale, 48 * scale))
+                py.transform.scale(self.sprite_sheet.subsurface((0, 72, 24, 24)), (24 * scale, 24 * scale)),
+                py.transform.scale(self.sprite_sheet.subsurface((72, 72, 24, 24)), (24 * scale, 24 * scale))
             ],
             "down": [
-                py.transform.scale(self.sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),  # Первый спрайт
-                py.transform.scale(self.sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))   # Второй спрайт
+                py.transform.scale(self.sprite_sheet.subsurface((0, 0, 24, 24)), (24 * scale, 24 * scale)),
+                py.transform.scale(self.sprite_sheet.subsurface((72, 0, 24, 24)), (24 * scale, 24 * scale))
             ],
             "left": [
-                py.transform.scale(self.sprite_sheet.subsurface((0, 48, 48, 48)), (48 * scale, 48 * scale)),  # Первый спрайт
-                py.transform.scale(self.sprite_sheet.subsurface((48, 48, 48, 48)), (48 * scale, 48 * scale))   # Второй спрайт
+                py.transform.scale(self.sprite_sheet.subsurface((0, 24, 24, 24)), (24 * scale, 24 * scale)),
+                py.transform.scale(self.sprite_sheet.subsurface((72, 24, 24, 24)), (24 * scale, 24 * scale))
             ],
             "right": [
-                py.transform.scale(self.sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),  # Первый спрайт
-                py.transform.scale(self.sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))   # Второй спрайт
-            ]
+                py.transform.scale(self.sprite_sheet.subsurface((0, 48, 24, 24)), (24 * scale, 24 * scale)),
+                py.transform.scale(self.sprite_sheet.subsurface((72, 48, 24, 24)), (24 * scale, 24 * scale))
+                ]
         }
         self.direction = "inaction"
         self.image = self.animations[self.direction][0]
         self.rect = self.image.get_rect(topleft=pos)
         self.frame_index = 0
-        self.animation_speed = 0.1
+        self.animation_speed = 0.28
         self.last_update = py.time.get_ticks()
         self.path = path  # Маршрут NPC
         self.current_path_index = 0  # Текущая точка маршрута

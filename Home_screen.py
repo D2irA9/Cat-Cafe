@@ -3,8 +3,13 @@ import sys
 from Button import Button
 from Sql import Database
 from Game import Game
+
 def Home_screen():
     """Начальный экран"""
+    db = Database()
+    db.connect()
+    db.creating_tables()
+    db.close()
     py.init()
     screen = py.display.set_mode((600, 900))
     py.display.set_caption("Hi")
@@ -17,21 +22,26 @@ def Home_screen():
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
 
     # Создание кнопок
-    button_yes = Button("Да", 135, 360, 350, 100, WHITE,(30, 144, 255))
-    button_no = Button("Нет", 135, 560, 350, 100,  WHITE,(220, 20, 60))
+    button_yes = Button("Да", 135, 360, 350, 100, WHITE, (30, 144, 255))
+    button_no = Button("Нет", 135, 560, 350, 100, WHITE, (220, 20, 60))
 
     while True:
         for event in py.event.get():
             if event.type == py.QUIT:
                 py.quit()
+                sys.exit()
 
-        if button_yes.is_clicked():
-            Yes_button(WHITE, BLACK, font)
-            return
+        # Проверка нажатия левой кнопки мыши
+        if event.type == py.MOUSEBUTTONDOWN and event.button == 1:  # 1 - это ЛКМ
+            mouse_pos = py.mouse.get_pos()  # Получаем позицию курсора
 
-        if button_no.is_clicked():
-            No_button(WHITE, BLACK, font)
-            return
+            if button_yes.is_clicked(mouse_pos):
+                Yes_button(WHITE, BLACK, font)
+                return
+
+            if button_no.is_clicked(mouse_pos):
+                No_button(WHITE, BLACK, font)
+                return
 
         screen.fill(WHITE)
 
@@ -94,7 +104,7 @@ def No_button(WHITE, BLACK, font):
                             cursor_position = 0
                             text_er_surf = None
                             # Если все хорошо, то игра запускается
-
+                            Game()
                         else:
                             text_er_surf = font.render("Все поля должны быть заполнены", True, (220, 20, 60))
                             text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -223,6 +233,7 @@ def Yes_button(WHITE, BLACK, font):
                                 cursor_position = 0
                                 text_er_surf = None
                                 # Если все хорошо, то игра запускается
+                                Game()
                             else:
                                 text_er_surf = font.render("Неверный email или пароль.", True, (220, 20, 60))
                                 text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
