@@ -6,10 +6,11 @@ from Game import Game
 
 def Home_screen():
     """Начальный экран"""
-    db = Database()
-    db.connect()
-    db.creating_tables()
-    db.close()
+    # db = Database()
+    # db.connect()
+    # db.creating_tables()
+    # db.close()
+
     py.init()
     screen = py.display.set_mode((600, 900))
     py.display.set_caption("Hi")
@@ -31,9 +32,8 @@ def Home_screen():
                 py.quit()
                 sys.exit()
 
-        # Проверка нажатия левой кнопки мыши
-        if event.type == py.MOUSEBUTTONDOWN and event.button == 1:  # 1 - это ЛКМ
-            mouse_pos = py.mouse.get_pos()  # Получаем позицию курсора
+        if event.type == py.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_pos = py.mouse.get_pos()
 
             if button_yes.is_clicked(mouse_pos):
                 Yes_button(WHITE, BLACK, font)
@@ -63,9 +63,12 @@ def No_button(WHITE, BLACK, font):
 
     # Ввод текста
     input_boxes = [
-        py.Rect(75, 300, 450, 70), # Email
-        py.Rect(75, 450, 450, 70), # Пароль
-        py.Rect(75, 600, 450, 70)  # Имя
+        # Email
+        py.Rect(75, 300, 450, 70),
+        # Пароль
+        py.Rect(75, 450, 450, 70),
+        # Имя
+        py.Rect(75, 600, 450, 70)
     ]
     input_texts = ['', '', '']
     active_input = -1
@@ -133,7 +136,7 @@ def No_button(WHITE, BLACK, font):
                 for i, box in enumerate(input_boxes):
                     if box.collidepoint(event.pos):
                         active_input = i
-                        cursor_position = len(input_texts[i])  # Устанавливаем курсор в конец текста
+                        cursor_position = len(input_texts[i])
                 if active_input == -1 and not any(box.collidepoint(event.pos) for box in input_boxes):
                     active_input = -1
 
@@ -176,7 +179,7 @@ def No_button(WHITE, BLACK, font):
 
         # Управление видимостью курсора
         cursor_timer += 1
-        if cursor_timer >= 30:  # Каждые 30 кадров переключаем видимость курсора
+        if cursor_timer >= 30:
             cursor_visible = not cursor_visible
             cursor_timer = 0
 
@@ -190,8 +193,10 @@ def Yes_button(WHITE, BLACK, font):
 
     # Переменные для ввода текста
     input_boxes = [
-        py.Rect(75, 300, 450, 70),  # Email
-        py.Rect(75, 450, 450, 70),  # Пароль
+        # Email
+        py.Rect(75, 300, 450, 70),
+        # Пароль
+        py.Rect(75, 450, 450, 70),
     ]
     input_texts = ['', '']
     active_input = -1
@@ -266,7 +271,7 @@ def Yes_button(WHITE, BLACK, font):
                 for i, box in enumerate(input_boxes):
                     if box.collidepoint(event.pos):
                         active_input = i
-                        cursor_position = len(input_texts[i])  # Устанавливаем курсор в конец текста
+                        cursor_position = len(input_texts[i])
                 if active_input == -1 and not any(box.collidepoint(event.pos) for box in input_boxes):
                     active_input = -1
 
@@ -309,7 +314,7 @@ def Yes_button(WHITE, BLACK, font):
 
         # Управление видимостью курсора
         cursor_timer += 1
-        if cursor_timer >= 30:  # Каждые 30 кадров переключаем видимость курсора
+        if cursor_timer >= 30:
             cursor_visible = not cursor_visible
             cursor_timer = 0
 

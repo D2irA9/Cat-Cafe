@@ -33,13 +33,14 @@ class NPC(py.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.28
         self.last_update = py.time.get_ticks()
-        self.path = path  # Маршрут NPC
-        self.current_path_index = 0  # Текущая точка маршрута
+        # Маршрут NPC
+        self.path = path
+        self.current_path_index = 0
 
     def update(self):
         """Обновление анимации и движения NPC"""
         now = py.time.get_ticks()
-        if now - self.last_update > 100:  # Задержка между кадрами анимации
+        if now - self.last_update > 100:
             self.frame_index = (self.frame_index + 1) % len(self.animations[self.direction])
             self.image = self.animations[self.direction][self.frame_index]
             self.last_update = now
@@ -60,6 +61,6 @@ class NPC(py.sprite.Sprite):
                 self.rect.y -= 1
                 self.direction = "up"
             else:
-                self.current_path_index += 1  # Переход к следующей точке маршрута
+                self.current_path_index += 1
                 if self.current_path_index >= len(self.path):
-                    self.direction = "inaction"  # Остановка после завершения маршрута
+                    self.direction = "inaction"
