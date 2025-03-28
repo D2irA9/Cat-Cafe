@@ -36,6 +36,7 @@ class NPC(py.sprite.Sprite):
         # Маршрут NPC
         self.path = path
         self.current_path_index = 0
+        self.path_completed = False
 
     def update(self):
         """Обновление анимации и движения NPC"""
@@ -64,3 +65,4 @@ class NPC(py.sprite.Sprite):
                 self.current_path_index += 1
                 if self.current_path_index >= len(self.path):
                     self.direction = "inaction"
+                    self.path_completed = True
