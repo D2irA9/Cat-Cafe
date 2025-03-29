@@ -99,6 +99,28 @@ def Game():
             if not available_npcs:
                 available_npcs.extend(npc_data)
 
+    def spawn_food_with_npc():
+        """Прорисовка НПС рядом с едой"""
+        food_group.empty()
+        for npc in [n for n in active_npcs if hasattr(n, 'is_market_npc')]:
+            npc.kill()
+
+        random.shuffle(npc_data)
+        npcs_for_food = npc_data[:len(FOOD_SPAWN_POINTS)]
+
+        for i, pos in enumerate(FOOD_SPAWN_POINTS):
+            # Создаем еду
+            new_food = Food(pos, random.choice(food_types), scale=3)
+            food_group.add(new_food)
+
+            # Создаем NPC (если хватило уникальных)
+            if i < len(npcs_for_food):
+                npc_info = npcs_for_food[i]
+                npc_pos = (pos[0], pos[1] - 60)
+                new_npc = NPC(npc_pos, scale, npc_info["sprite"], [npc_pos, npc_pos])
+                new_npc.is_market_npc = True
+                all_sprites.add(new_npc)
+
     def remove_completed_npcs():
         """Удаляет завершивших путь NPC"""
         for npc in active_npcs[:]:
@@ -162,16 +184,10 @@ def Game():
                         event.pos):
                     game_states["is_working_day"] = True
                     game_states["current_path_index"] = 0
-                elif game_states["start_button_completed"] and not game_states[
-                    "is_market_day"] and go_to_market.is_clicked(event.pos):
+                elif game_states["start_button_completed"] and not game_states["is_market_day"] and go_to_market.is_clicked(event.pos):
                     game_states["is_market_day"] = True
                     game_states["current_path_index"] = 0
-                    # Создаем еду при переходе на рынок
-                    for pos in FOOD_SPAWN_POINTS:
-                        food_type = random.choice(food_types)
-                        new_food = Food(pos, food_type, scale=3)
-                        food_group.add(new_food)
-                        all_sprites.add(new_food)
+                    spawn_food_with_npc()
                 elif game_states["return_button_shown"] and return_button.is_clicked(event.pos):
                     game_states["is_market_day"] = False
                     game_states["return_button_shown"] = False
@@ -188,7 +204,7 @@ def Game():
                             inventory[food.type] += 1
                             food.kill()
 
-                            # Обработка состояний игры
+        # Обработка состояний игры
         if game_states["is_working_day"] and handle_movement(player, game_states["player_path"],
                                                              game_states["camera_y"], game_states["target_camera_y"]):
             game_states["is_working_day"] = False

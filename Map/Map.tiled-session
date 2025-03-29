@@ -45,11 +45,11 @@
             "scaleInEditor": 1
         },
         "map.tmx": {
-            "scale": 8,
+            "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 70.1875,
-                "y": 338
+                "x": -58.75,
+                "y": 330
             }
         },
         "new_map.tmx": {

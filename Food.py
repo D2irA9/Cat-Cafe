@@ -56,7 +56,6 @@ class Food(py.sprite.Sprite):
         self.image = sprite_sheet.subsurface(frame)
         self.rect = self.image.get_rect(center=pos)
         self.type = food_type
-        # Убираем lifetime и alpha, так как они нам не нужны
         self.collected = False
 
         # Масштабируем спрайт
@@ -71,19 +70,6 @@ class Food(py.sprite.Sprite):
 
         self.rect = self.image.get_rect(center=pos)
         self.type = food_type
-
-    def update(self):
-        """Обновление состояния еды"""
-        pass
-        # self.lifetime -= 1
-        #
-        # # Эффект исчезновения
-        # if self.lifetime < 60:
-        #     self.alpha = max(0, self.alpha - 5)
-        #     self.image.set_alpha(self.alpha)
-        #
-        # if self.lifetime <= 0:
-        #     self.kill()  # Удаляем спрайт
 
     def draw(self, surface):
         """Отрисовка с учетом прозрачности"""
