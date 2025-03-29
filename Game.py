@@ -6,6 +6,7 @@ from Drawing import Tile
 from Button import Button
 from Player import Player
 from NPS import NPC
+from Food import Food
 
 def Game():
     """Игра"""
