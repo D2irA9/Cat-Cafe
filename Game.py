@@ -68,6 +68,35 @@ def Game():
     npc_spawn_interval = 5000
     active_npcs = []
 
+    # Еда
+    food_types = [
+        "Pasta", "Tacos", "Ramen", "Hamburg", "Pizza", "Rolls", "Soup", "Fried_egg",
+        "Water", "Cocoa", "Tea", "Milkshake", "Coffee", "Cocktail", "Lemonade", "Soda",
+        "Cupcake", "Cheesecake", "Cake", "Ice_cream", "Pie"
+    ]
+    FOOD_SPAWN_POINTS = [
+        (150, 400),
+        (450, 400),
+        (150, 700),
+        (450, 700)
+    ]
+    food_group = py.sprite.Group()
+    inventory = {food_type: 0 for food_type in food_types}
+    print(inventory)
+
+    def spawn_random_food(count=4):
+        for _ in range(count):
+            food_type = random.choice(food_types)
+            x = random.randint(50, 590)
+            y = random.randint(50, 700)
+            new_food = Food((x, y), food_type, scale=4)
+            food_group.add(new_food)
+            all_sprites.add(new_food)
+
+    spawn_random_food(4)
+    # Шрифт для отображения инвентаря
+    font = py.font.SysFont(None, 24)
+
     def spawn_random_npc():
         """Создает уникального NPC"""
         if len(active_npcs) < 3 and available_npcs:
@@ -158,6 +187,14 @@ def Game():
                     player.rect.topleft = (130, 310)
                     game_states["camera_y"] = 0
                     game_states["current_path_index"] = 0
+                for food in food_group:
+                    if food.is_clicked(event.pos):
+                        # Добавляем в инвентарь
+                        inventory[food.type] += 1
+                        # Удаляем спрайт
+                        food.kill()
+                        # Создаем новый предмет взамен удаленного
+                        spawn_random_food(1)
 
         # Обработка состояний игры
         if game_states["is_working_day"] and handle_movement(player, game_states["player_path"],
@@ -182,6 +219,13 @@ def Game():
         for sprite in all_sprites:
             screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y - game_states["camera_y"]))
 
+        # Отрисовка инвентаря
+        inventory_text = "Инвентарь: " + ", ".join([f"{k}: {v}" for k, v in inventory.items() if v > 0])
+        if inventory_text == "Инвентарь: ":
+            inventory_text = "Инвентарь пуст"
+        inv_surface = font.render(inventory_text, True, BLACK)
+        screen.blit(inv_surface, (10, 10))
+
         # Отрисовка кнопок
         if not game_states["is_working_day"] and not game_states["is_market_day"]:
             if not game_states["start_button_completed"]:
@@ -192,6 +236,11 @@ def Game():
         # Отрисовка кнопки "Вернуться"
         if game_states["return_button_shown"]:
             return_button.draw(screen)
+
+        # Отрисока еды
+        food_group.update()
+        for food in food_group:
+            screen.blit(food.image, (food.rect.x, food.rect.y - game_states["camera_y"]))
 
         py.display.flip()
         clock.tick(60)
