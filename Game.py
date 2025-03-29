@@ -75,27 +75,13 @@ def Game():
         "Cupcake", "Cheesecake", "Cake", "Ice_cream", "Pie"
     ]
     FOOD_SPAWN_POINTS = [
-        (150, 400),
-        (450, 400),
-        (150, 700),
-        (450, 700)
+        (95, 2390),
+        (480, 2390),
+        (95, 2650),
+        (480, 2650)
     ]
     food_group = py.sprite.Group()
     inventory = {food_type: 0 for food_type in food_types}
-    print(inventory)
-
-    def spawn_random_food(count=4):
-        for _ in range(count):
-            food_type = random.choice(food_types)
-            x = random.randint(50, 590)
-            y = random.randint(50, 700)
-            new_food = Food((x, y), food_type, scale=4)
-            food_group.add(new_food)
-            all_sprites.add(new_food)
-
-    spawn_random_food(4)
-    # Шрифт для отображения инвентаря
-    font = py.font.SysFont(None, 24)
 
     def spawn_random_npc():
         """Создает уникального NPC"""
@@ -171,6 +157,7 @@ def Game():
                 py.quit()
                 sys.exit()
             if event.type == py.MOUSEBUTTONDOWN:
+                # Сначала проверяем клики по кнопкам
                 if not game_states["start_button_completed"] and not game_states["is_market_day"] and start.is_clicked(
                         event.pos):
                     game_states["is_working_day"] = True
@@ -179,24 +166,29 @@ def Game():
                     "is_market_day"] and go_to_market.is_clicked(event.pos):
                     game_states["is_market_day"] = True
                     game_states["current_path_index"] = 0
+                    # Создаем еду при переходе на рынок
+                    for pos in FOOD_SPAWN_POINTS:
+                        food_type = random.choice(food_types)
+                        new_food = Food(pos, food_type, scale=3)
+                        food_group.add(new_food)
+                        all_sprites.add(new_food)
                 elif game_states["return_button_shown"] and return_button.is_clicked(event.pos):
-                    # Логика для кнопки "Вернуться"
                     game_states["is_market_day"] = False
                     game_states["return_button_shown"] = False
-                    # Сброс позиции игрока и камеры
                     player.rect.topleft = (130, 310)
                     game_states["camera_y"] = 0
                     game_states["current_path_index"] = 0
-                for food in food_group:
-                    if food.is_clicked(event.pos):
-                        # Добавляем в инвентарь
-                        inventory[food.type] += 1
-                        # Удаляем спрайт
+                    # Удаляем всю еду при возвращении
+                    for food in food_group:
                         food.kill()
-                        # Создаем новый предмет взамен удаленного
-                        spawn_random_food(1)
 
-        # Обработка состояний игры
+                if game_states["is_market_day"] or game_states["return_button_shown"]:
+                    for food in food_group:
+                        if food.is_clicked(event.pos, game_states["camera_y"]):
+                            inventory[food.type] += 1
+                            food.kill()
+
+                            # Обработка состояний игры
         if game_states["is_working_day"] and handle_movement(player, game_states["player_path"],
                                                              game_states["camera_y"], game_states["target_camera_y"]):
             game_states["is_working_day"] = False
@@ -218,13 +210,6 @@ def Game():
             screen.blit(tile.image, (tile.rect.x, tile.rect.y - game_states["camera_y"]))
         for sprite in all_sprites:
             screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y - game_states["camera_y"]))
-
-        # Отрисовка инвентаря
-        inventory_text = "Инвентарь: " + ", ".join([f"{k}: {v}" for k, v in inventory.items() if v > 0])
-        if inventory_text == "Инвентарь: ":
-            inventory_text = "Инвентарь пуст"
-        inv_surface = font.render(inventory_text, True, BLACK)
-        screen.blit(inv_surface, (10, 10))
 
         # Отрисовка кнопок
         if not game_states["is_working_day"] and not game_states["is_market_day"]:

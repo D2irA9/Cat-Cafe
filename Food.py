@@ -17,10 +17,8 @@ class Food(py.sprite.Sprite):
             cls._sweets_sheet = py.image.load("Sprite/Food/sweets.png").convert_alpha()
             cls._initialized = True
 
-    def __init__(self, pos, food_type, scale=4):
+    def __init__(self, pos, food_type, scale):
         super().__init__()
-
-        # Инициализируем ресурсы при первом создании объекта
         Food.init_resources()
 
         # Словарь с координатами каждого типа еды
@@ -56,6 +54,10 @@ class Food(py.sprite.Sprite):
         # Получаем спрайт из соответствующего листа
         sprite_sheet, frame = self.food_types.get(food_type, (self._food_sheet, py.Rect(0, 0, 16, 16)))
         self.image = sprite_sheet.subsurface(frame)
+        self.rect = self.image.get_rect(center=pos)
+        self.type = food_type
+        # Убираем lifetime и alpha, так как они нам не нужны
+        self.collected = False
 
         # Масштабируем спрайт
         self.scale = scale
@@ -69,25 +71,30 @@ class Food(py.sprite.Sprite):
 
         self.rect = self.image.get_rect(center=pos)
         self.type = food_type
-        self.lifetime = 180
-        self.alpha = 255
 
     def update(self):
         """Обновление состояния еды"""
-        self.lifetime -= 1
-
-        # Эффект исчезновения
-        if self.lifetime < 60:
-            self.alpha = max(0, self.alpha - 5)
-            self.image.set_alpha(self.alpha)
-
-        if self.lifetime <= 0:
-            self.kill()  # Удаляем спрайт
+        pass
+        # self.lifetime -= 1
+        #
+        # # Эффект исчезновения
+        # if self.lifetime < 60:
+        #     self.alpha = max(0, self.alpha - 5)
+        #     self.image.set_alpha(self.alpha)
+        #
+        # if self.lifetime <= 0:
+        #     self.kill()  # Удаляем спрайт
 
     def draw(self, surface):
         """Отрисовка с учетом прозрачности"""
         surface.blit(self.image, self.rect)
 
-    def is_clicked(self, pos):
-        """Проверяет, был ли клик по спрайту"""
-        return self.rect.collidepoint(pos)
+    def collect(self):
+        """Вызывается при сборе еды"""
+        self.collected = True
+        self.kill()
+
+    def is_clicked(self, pos, camera_y=0):
+        """Проверяет, был ли клик по спрайту с учетом камеры"""
+        adjusted_pos = (pos[0], pos[1] + camera_y)
+        return self.rect.collidepoint(adjusted_pos)
