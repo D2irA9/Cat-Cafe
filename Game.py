@@ -7,9 +7,31 @@ from Button import Button
 from Player import Player
 from NPS import NPC
 from Food import Food
+from Player_data import current_player_id, current_player_email, current_player_balance, current_player_name
+from Sql import Database
 
-def Game():
+def Game(player_id, player_email, player_balance, player_name):
     """Игра"""
+    print(f"id: {player_id} name: {player_name} balanc: {player_balance}, email: {player_email}")
+    # Баланс
+    db = Database()
+    db.connect()
+
+    def update_balance(id, balance, amount):
+        """Обновляет баланс игрока"""
+        balance += amount
+        db.update_balance(id, balance)
+        print(f"Баланс обновлен: {balance}")
+    #
+    # def get_balance():
+    #     """Получает текущий баланс из БД"""
+    #     global current_player_balance
+    #     current_player_balance = db.get_player_balance(current_player_id)
+    #     return current_player_balance
+    #
+    # balance = get_balance()
+    update_balance(player_id, player_balance, 10)
+
     py.init()
 
     screen = py.display.set_mode((640, 960))

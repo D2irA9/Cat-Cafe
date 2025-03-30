@@ -3,6 +3,7 @@ import sys
 from Button import Button
 from Sql import Database
 from Game import Game
+from Player_data import current_player_id, current_player_email, current_player_balance, current_player_name
 
 def Home_screen():
     """Начальный экран"""
@@ -57,6 +58,9 @@ def Home_screen():
 
 def No_button(WHITE, BLACK, font):
     """Если выброно нет"""
+
+    global current_player_id, current_player_email, current_player_balance, current_player_name
+
     py.init()
     new_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Регистрация")
@@ -83,10 +87,6 @@ def No_button(WHITE, BLACK, font):
     text_er_surf = None
     text_er_rect = None
 
-    # Подключение к БД
-    db = Database()
-    db.connect()
-
     while True:
         for event in py.event.get():
             if event.type == py.QUIT:
@@ -100,14 +100,36 @@ def No_button(WHITE, BLACK, font):
                 if active_input != -1:
                     if event.key == py.K_RETURN:
                         if all(input_texts):
-                            db.add_player(input_texts[2], input_texts[0], input_texts[1])
-                            db.close()
-                            input_texts = ['', '', '']
-                            active_input = -1
-                            cursor_position = 0
-                            text_er_surf = None
-                            # Если все хорошо, то игра запускается
-                            Game()
+                            current_player_name = input_texts[2]
+                            current_player_email = input_texts[0]
+                            current_player_balance = 100
+                            # Подключение к БД
+                            db = Database()
+                            db.connect()
+                            try:
+                                # Добавляем игрока в БД
+                                db.add_player(current_player_name, current_player_email, input_texts[1],
+                                              current_player_balance)
+
+                                # Получаем ID нового игрока
+                                current_player_id = db.get_player_id(current_player_email)
+                                print(
+                                    f"Новый игрок: ID={current_player_id}, Email={current_player_email}, Баланс={current_player_balance}")
+
+                                # Закрываем соединение
+                                db.close()
+
+                                # Сбрасываем поля ввода
+                                input_texts = ['', '', '']
+                                active_input = -1
+
+                                # Запускаем игру
+                                Game(current_player_id, current_player_email, current_player_balance, current_player_name)
+
+                            except Exception as e:
+                                print(f"Ошибка при регистрации: {e}")
+                                text_er_surf = font.render("Ошибка регистрации", True, (220, 20, 60))
+                                text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
                         else:
                             text_er_surf = font.render("Все поля должны быть заполнены", True, (220, 20, 60))
                             text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -187,6 +209,9 @@ def No_button(WHITE, BLACK, font):
 
 def Yes_button(WHITE, BLACK, font):
     """Если выбрано да"""
+
+    global current_player_id, current_player_email, current_player_balance, current_player_name
+
     py.init()
     new_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Вход")
@@ -211,10 +236,6 @@ def Yes_button(WHITE, BLACK, font):
     text_er_surf = None
     text_er_rect = None
 
-    # Подключение к БД
-    db = Database()
-    db.connect()
-
     while True:
         for event in py.event.get():
             if event.type == py.QUIT:
@@ -230,22 +251,31 @@ def Yes_button(WHITE, BLACK, font):
                         if all(input_texts):
                             email = input_texts[0]
                             password = input_texts[1]
+                            # Подключение к БД
+                            db = Database()
+                            db.connect()
                             if db.check_user(email, password):
-                                db.close()
-                                print("Успешный вход в аккаунт!")
-                                input_texts = ['', '']
-                                active_input = -1
-                                cursor_position = 0
-                                text_er_surf = None
-                                # Если все хорошо, то игра запускается
-                                Game()
-                            else:
-                                text_er_surf = font.render("Неверный email или пароль.", True, (220, 20, 60))
-                                text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
+                                # Получаем все данные игрока
+                                query = "SELECT id, name, balance FROM player WHERE email = %s"
+                                result = db.execute_query(query, (email,))
 
-                        else:
-                            text_er_surf = font.render("Все поля должны быть заполнены", True, (220, 20, 60))
-                            text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
+                                if result and result[0]:
+                                    current_player_id = result[0][0][0]
+                                    current_player_name = result[0][0][1]
+                                    current_player_balance = result[0][0][2]
+                                    current_player_email = email
+
+                                    print(
+                                        f"Вход выполнен: ID={current_player_id}, Имя={current_player_name}, Баланс={current_player_balance}")
+
+                                    db.close()
+                                    Game(current_player_id, current_player_email, current_player_balance, current_player_name)
+                                else:
+                                    text_er_surf = font.render("Ошибка получения данных", True, (220, 20, 60))
+                                    text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
+                            else:
+                                text_er_surf = font.render("Неверный email или пароль", True, (220, 20, 60))
+                                text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
 
                     elif event.key == py.K_BACKSPACE:
                         if cursor_position > 0:

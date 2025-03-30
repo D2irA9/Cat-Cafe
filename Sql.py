@@ -162,6 +162,23 @@ class Database:
         result, _ = self.execute_query(query, params)
         return result is not None and len(result) > 0
 
+    def get_player_id(self, email):
+        """Получает ID игрока по email"""
+        query = "SELECT id FROM player WHERE email = %s"
+        result, _ = self.execute_query(query, (email,))
+        return result[0][0] if result else None
+
+    def get_player_balance(self, player_id):
+        """Получает баланс игрока по ID"""
+        query = "SELECT balance FROM player WHERE id = %s"
+        result, _ = self.execute_query(query, (player_id,))
+        return result[0][0] if result else None
+
+    def update_balance(self, player_id, new_balance):
+        """Обновляет баланс игрока"""
+        query = "UPDATE player SET balance = %s WHERE id = %s"
+        self.execute_query(query, (new_balance, player_id))
+
     def close(self):
         """Закрывает соединение с базой данных."""
         if self.connection:
