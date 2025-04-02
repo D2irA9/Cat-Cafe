@@ -7,31 +7,11 @@ from Button import Button
 from Player import Player
 from NPS import NPC
 from Food import Food
-from Player_data import current_player_id, current_player_email, current_player_balance, current_player_name
-from Sql import Database
+from CoinDisplay import CoinDisplay
 
 def Game(player_id, player_email, player_balance, player_name):
     """Игра"""
     print(f"id: {player_id} name: {player_name} balanc: {player_balance}, email: {player_email}")
-    # Баланс
-    db = Database()
-    db.connect()
-
-    def update_balance(id, balance, amount):
-        """Обновляет баланс игрока"""
-        balance += amount
-        db.update_balance(id, balance)
-        print(f"Баланс обновлен: {balance}")
-    #
-    # def get_balance():
-    #     """Получает текущий баланс из БД"""
-    #     global current_player_balance
-    #     current_player_balance = db.get_player_balance(current_player_id)
-    #     return current_player_balance
-    #
-    # balance = get_balance()
-    update_balance(player_id, player_balance, 10)
-
     py.init()
 
     screen = py.display.set_mode((640, 960))
@@ -56,6 +36,8 @@ def Game(player_id, player_email, player_balance, player_name):
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
 
+    # Монеты
+    coin_display = CoinDisplay()
     # Кнопки
     start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
     go_to_market = Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
@@ -264,6 +246,10 @@ def Game(player_id, player_email, player_balance, player_name):
         food_group.update()
         for food in food_group:
             screen.blit(food.image, (food.rect.x, food.rect.y - game_states["camera_y"]))
+
+        # Обновляем и рисуем монеты
+        coin_display.update()
+        coin_display.draw(screen, player_balance)
 
         py.display.flip()
         clock.tick(60)
