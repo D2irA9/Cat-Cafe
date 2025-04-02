@@ -3,14 +3,24 @@ import sys
 from Button import Button
 from Sql import Database
 from Game import Game
-from Player_data import current_player_id, current_player_email, current_player_balance, current_player_name
+from Player_data import current_player_id, current_player_email, current_player_balance, current_player_name, save_player_data, load_player_data, first_login
+
 
 def Home_screen():
     """Начальный экран"""
+
     # db = Database()
     # db.connect()
     # db.creating_tables()
     # db.close()
+
+    # Загружаем данные
+    load_player_data()
+
+    if current_player_id is not None and not first_login:
+        show_welcome_screen(current_player_name)
+        Game(current_player_id, current_player_email, current_player_balance, current_player_name)
+        return
 
     py.init()
     screen = py.display.set_mode((600, 900))
@@ -55,6 +65,39 @@ def Home_screen():
         button_no.draw(screen)
 
         py.display.flip()
+
+
+# В Home_screen.py добавляем функцию заставки
+def show_welcome_screen(name):
+    """Анимированное появление текста приветствия"""
+    py.init()
+    screen = py.display.set_mode((600, 900))
+    clock = py.time.Clock()
+    font = py.font.Font("Font/PixelizerBold.ttf", 48)
+
+    text = f"Привет, {name}!"
+    alpha = 0
+    text_surface = font.render(text, True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=(300, 450))
+
+    running = True
+    while running:
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                py.quit()
+                sys.exit()
+            if event.type == py.KEYDOWN or event.type == py.MOUSEBUTTONDOWN:
+                running = False
+
+        # Плавное появление текста
+        if alpha < 255:
+            alpha += 3
+            text_surface.set_alpha(alpha)
+
+        screen.fill((0, 0, 0))
+        screen.blit(text_surface, text_rect)
+        py.display.flip()
+        clock.tick(60)
 
 def No_button(WHITE, BLACK, font):
     """Если выброно нет"""
@@ -108,13 +151,10 @@ def No_button(WHITE, BLACK, font):
                             db.connect()
                             try:
                                 # Добавляем игрока в БД
-                                db.add_player(current_player_name, current_player_email, input_texts[1],
-                                              current_player_balance)
+                                db.add_player(current_player_name, current_player_email, input_texts[1], current_player_balance)
 
                                 # Получаем ID нового игрока
                                 current_player_id = db.get_player_id(current_player_email)
-                                print(
-                                    f"Новый игрок: ID={current_player_id}, Email={current_player_email}, Баланс={current_player_balance}")
 
                                 # Закрываем соединение
                                 db.close()
@@ -123,9 +163,14 @@ def No_button(WHITE, BLACK, font):
                                 input_texts = ['', '', '']
                                 active_input = -1
 
-                                # Запускаем игру
-                                Game(current_player_id, current_player_email, current_player_balance, current_player_name)
+                                # Сохраняем данные
+                                save_player_data()
 
+                                # Запускаем игру
+                                first_login = False
+                                save_player_data()
+                                show_welcome_screen(current_player_name)
+                                Game(current_player_id, current_player_email, current_player_balance, current_player_name)
                             except Exception as e:
                                 print(f"Ошибка при регистрации: {e}")
                                 text_er_surf = font.render("Ошибка регистрации", True, (220, 20, 60))
@@ -136,13 +181,11 @@ def No_button(WHITE, BLACK, font):
 
                     elif event.key == py.K_BACKSPACE:
                         if cursor_position > 0:
-                            input_texts[active_input] = (input_texts[active_input][:cursor_position - 1] +
-                                                          input_texts[active_input][cursor_position:])
+                            input_texts[active_input] = (input_texts[active_input][:cursor_position - 1] + input_texts[active_input][cursor_position:])
                             cursor_position -= 1
                     elif event.key == py.K_DELETE:
                         if cursor_position < len(input_texts[active_input]):
-                            input_texts[active_input] = (input_texts[active_input][:cursor_position] +
-                                                          input_texts[active_input][cursor_position + 1:])
+                            input_texts[active_input] = (input_texts[active_input][:cursor_position] + input_texts[active_input][cursor_position + 1:])
                     elif event.key == py.K_LEFT:
                         cursor_position = max(0, cursor_position - 1)
                     elif event.key == py.K_RIGHT:
@@ -269,7 +312,17 @@ def Yes_button(WHITE, BLACK, font):
                                         f"Вход выполнен: ID={current_player_id}, Имя={current_player_name}, Баланс={current_player_balance}")
 
                                     db.close()
-                                    Game(current_player_id, current_player_email, current_player_balance, current_player_name)
+                                    # Сохраняем даные
+                                    current_player_id = result[0][0][0]
+                                    current_player_name = result[0][0][1]
+                                    current_player_balance = result[0][0][2]
+                                    current_player_email = email
+                                    first_login = False
+                                    save_player_data()
+
+                                    # Запуск игры
+                                    Game(current_player_id, current_player_email, current_player_balance,
+                                         current_player_name)
                                 else:
                                     text_er_surf = font.render("Ошибка получения данных", True, (220, 20, 60))
                                     text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))

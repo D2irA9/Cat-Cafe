@@ -179,6 +179,14 @@ class Database:
         query = "UPDATE player SET balance = %s WHERE id = %s"
         self.execute_query(query, (new_balance, player_id))
 
+    def get_menu_items(self):
+        """Получает список всех блюд и их цен из базы данных."""
+        query = "SELECT name, price FROM menu"
+        result, _ = self.execute_query(query)
+        if result:
+            return {item[0]: item[1] for item in result}
+        return None
+
     def close(self):
         """Закрывает соединение с базой данных."""
         if self.connection:

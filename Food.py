@@ -1,6 +1,5 @@
 import pygame as py
 
-
 class Food(py.sprite.Sprite):
     # Классовые переменные для хранения загруженных спрайт-листов
     _food_sheet = None
@@ -17,7 +16,7 @@ class Food(py.sprite.Sprite):
             cls._sweets_sheet = py.image.load("Sprite/Food/sweets.png").convert_alpha()
             cls._initialized = True
 
-    def __init__(self, pos, food_type, scale):
+    def __init__(self, pos, food_type, scale, quantity=1):
         super().__init__()
         Food.init_resources()
 
@@ -70,10 +69,36 @@ class Food(py.sprite.Sprite):
 
         self.rect = self.image.get_rect(center=pos)
         self.type = food_type
+        self.quantity = quantity
+        self.font = py.font.Font("Font/PixelizerBold.ttf", 16)
 
-    def draw(self, surface):
-        """Отрисовка с учетом прозрачности"""
-        surface.blit(self.image, self.rect)
+        # Создаем поверхность для отображения количества
+        self.update_quantity_surface()
+
+    def update_quantity_surface(self):
+        """Обновляет поверхность с количеством"""
+        self.quantity_surface = self.font.render(f"x{self.quantity}", True, (255, 255, 255))
+        self.quantity_rect = self.quantity_surface.get_rect(
+            midtop=(self.rect.centerx, self.rect.bottom + 5)
+        )
+
+    def draw(self, surface, camera_y=0):
+        """Отрисовка с количеством"""
+        pos_y = self.rect.y - camera_y
+        surface.blit(self.image, (self.rect.x, pos_y))
+
+        # Отрисовываем количество только если оно больше 1
+        if self.quantity > 1:
+            quantity_pos = (self.quantity_rect.x, pos_y + self.rect.height + 5)
+            surface.blit(self.quantity_surface, quantity_pos)
+
+    def decrease_quantity(self):
+        """Уменьшает количество на 1 и обновляет отображение"""
+        self.quantity -= 1
+        if self.quantity <= 0:
+            self.kill()
+        else:
+            self.update_quantity_surface()
 
     def collect(self):
         """Вызывается при сборе еды"""
