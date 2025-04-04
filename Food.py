@@ -16,7 +16,7 @@ class Food(py.sprite.Sprite):
             cls._sweets_sheet = py.image.load("Sprite/Food/sweets.png").convert_alpha()
             cls._initialized = True
 
-    def __init__(self, pos, food_type, scale, quantity=1):
+    def __init__(self, pos, food_type, scale, quantity=1, price=10):
         super().__init__()
         Food.init_resources()
 
@@ -69,11 +69,35 @@ class Food(py.sprite.Sprite):
 
         self.rect = self.image.get_rect(center=pos)
         self.type = food_type
-        self.quantity = quantity
-        self.font = py.font.Font("Font/PixelizerBold.ttf", 16)
 
-        # Создаем поверхность для отображения количества
-        self.update_quantity_surface()
+        self.price = price
+        self.quantity = quantity
+        self.font = py.font.Font("Font/PixelizerBold.ttf", 20)
+
+        # Загрузка только первого кадра монеты
+        coin_sheet = py.image.load("Sprite/coins/coins.png").convert_alpha()
+        self.coin_icon = coin_sheet.subsurface(py.Rect(0, 0, 16, 16))
+        self.coin_icon = py.transform.scale(self.coin_icon, (24, 24))
+
+        # Размеры фоновых прямоугольников
+        self.price_bg = py.Surface((70, 28), py.SRCALPHA)
+        self.price_bg.fill((0, 0, 0, 200))
+
+        self.quantity_bg = py.Surface((40, 28), py.SRCALPHA)
+        self.quantity_bg.fill((0, 100, 0, 200))
+
+        self.update_ui()
+
+    def update_ui(self):
+        """Обновляет элементы интерфейса"""
+
+        # Ценник
+        self.price_text = self.font.render(str(self.price), True, (255, 255, 0))
+        self.price_rect = self.price_text.get_rect(center=(25, 14))
+
+        # Количество
+        self.quantity_text = self.font.render(str(self.quantity), True, (255, 255, 255))
+        self.quantity_rect = self.quantity_text.get_rect(center=(20, 14))
 
     def update_quantity_surface(self):
         """Обновляет поверхность с количеством"""
@@ -83,15 +107,24 @@ class Food(py.sprite.Sprite):
         )
 
     def draw(self, surface, camera_y=0):
-        """Отрисовка с количеством"""
+        """Отрисовка с UI"""
         pos_y = self.rect.y - camera_y
+
+        # Отрисовываем само блюдо
         surface.blit(self.image, (self.rect.x, pos_y))
 
-        # Отрисовываем количество только если оно больше 1
-        if self.quantity > 1:
-            quantity_pos = (self.quantity_rect.x, pos_y + self.rect.height + 5)
-            surface.blit(self.quantity_surface, quantity_pos)
+        # Позиция ценника
+        price_bg_pos = (self.rect.centerx - 35, pos_y + self.rect.height - 5)
+        surface.blit(self.price_bg, price_bg_pos)
+        surface.blit(self.price_text, (price_bg_pos[0] + self.price_rect.x,
+                                       price_bg_pos[1] + self.price_rect.y))
+        surface.blit(self.coin_icon, (price_bg_pos[0] + 40, price_bg_pos[1] + 2))
 
+        # Позиция количества
+        quantity_bg_pos = (self.rect.centerx - 20, pos_y - 25)
+        surface.blit(self.quantity_bg, quantity_bg_pos)
+        surface.blit(self.quantity_text, (quantity_bg_pos[0] + self.quantity_rect.x,
+                                          quantity_bg_pos[1] + self.quantity_rect.y))
     def decrease_quantity(self):
         """Уменьшает количество на 1 и обновляет отображение"""
         self.quantity -= 1

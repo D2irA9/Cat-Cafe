@@ -1,17 +1,11 @@
 import pygame as py
 
-
 class CoinDisplay:
     def __init__(self):
-        # Загрузка и настройка спрайтов
         self.sprite_sheet = py.image.load("Sprite/coins/coins.png").convert_alpha()
         self.frame_size = 16
         self.total_frames = 13
-
-        # Увеличенный размер для отображения
         self.display_size = 48
-
-        # Создаем список кадров с увеличенным размером
         self.frames = []
         for i in range(self.total_frames):
             frame = py.Surface((self.frame_size, self.frame_size), py.SRCALPHA)
@@ -27,15 +21,15 @@ class CoinDisplay:
         self.cooldown_duration = 300
         self.is_animating = False
 
-        # Параметры отображения (увеличиваем размер контейнера)
+        # Параметры отображения
         self.bg_color = (242, 231, 116)
         self.border_color = (200, 180, 60)
         self.text_color = (0, 0, 0)
         self.position = (10, 10)
-        self.size = (300, 100)
-        self.normal_color = (0, 0, 0)  # Черный
-        self.positive_color = (0, 200, 0)  # Зеленый
-        self.negative_color = (200, 0, 0)  # Красный
+        self.size = (120, 60)
+        self.normal_color = (0, 0, 0)
+        self.positive_color = (0, 200, 0)
+        self.negative_color = (200, 0, 0)
         self.color_change_timer = 0
         self.current_text_color = self.normal_color
 
@@ -79,6 +73,7 @@ class CoinDisplay:
 
     def draw(self, screen, balance):
         """Отрисовка элемента с балансом"""
+
         # Фон и рамка
         rect = py.Rect(self.position[0], self.position[1], self.size[0], self.size[1])
         py.draw.rect(screen, self.bg_color, rect)

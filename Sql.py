@@ -32,11 +32,11 @@ class Database:
             with self.connection.cursor() as cursor:
                 cursor.execute(query, params)
                 self.connection.commit()
-                return cursor.fetchall(), cursor.description
+                return cursor.fetchall()
 
         except pymysql.MySQLError as e:
             print(f"Ошибка '{e}' при выполнении запроса: {query}")
-            return None, None
+            return None
 
     def add_MenuClient(self):
         """Добавления записи"""
@@ -182,7 +182,7 @@ class Database:
     def get_menu_items(self):
         """Получает список всех блюд и их цен из базы данных."""
         query = "SELECT name, price FROM menu"
-        result, _ = self.execute_query(query)
+        result = self.execute_query(query)
         if result:
             return {item[0]: item[1] for item in result}
         return None

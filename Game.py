@@ -8,12 +8,12 @@ from Player import Player
 from NPS import NPC
 from Food import Food
 from CoinDisplay import CoinDisplay
+from DayDisplay import DayDisplay
 from Player_data import clear_player_data
 from Sql import Database
 
 def Game(player_id, player_email, player_balance, player_name):
     """Игра"""
-    print(f"id: {player_id} name: {player_name} balanc: {player_balance}, email: {player_email}")
     py.init()
 
     screen = py.display.set_mode((640, 960))
@@ -41,8 +41,15 @@ def Game(player_id, player_email, player_balance, player_name):
     # Монеты
     coin_display = CoinDisplay()
 
+    # Дни
+    db = Database()
+    db.connect()
+    result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
+    player_day = result[0][0] if result and len(result) > 0 else 0
+    db.close()
+    day_display = DayDisplay((500, 10), (120, 60), player_day)
+
     # Кнопки
-    exit_button = Button("Выйти", 500, 10, 100, 60, (255, 255, 255), (200, 0, 0))
     start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
     go_to_market = Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
     return_button = Button("Вернуться", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
@@ -77,10 +84,9 @@ def Game(player_id, player_email, player_balance, player_name):
     npc_spawn_interval = 5000
     active_npcs = []
 
-    # Подключаемся к БД и загружаем цены
-    db = Database()
+    # Подключаемся к БД
     db.connect()
-    menu_prices = db.get_menu_items()  # Получаем цены из БД
+    menu_prices = db.get_menu_items()
     db.close()
 
     if not menu_prices:
@@ -117,7 +123,6 @@ def Game(player_id, player_email, player_balance, player_name):
                 available_npcs.extend(npc_data)
 
     def spawn_food_with_npc():
-        """Прорисовка НПС рядом с едой"""
         food_group.empty()
         for npc in [n for n in active_npcs if hasattr(n, 'is_market_npc')]:
             npc.kill()
@@ -126,11 +131,14 @@ def Game(player_id, player_email, player_balance, player_name):
         npcs_for_food = npc_data[:len(FOOD_SPAWN_POINTS)]
 
         for i, pos in enumerate(FOOD_SPAWN_POINTS):
-            # Создаем еду
-            new_food = Food(pos, random.choice(list(menu_prices.keys())), scale=3, quantity=random.randint(1, 5))
+            food_type = random.choice(list(menu_prices.keys()))
+            quantity = random.randint(1, 5)
+            price = menu_prices[food_type]
+
+            new_food = Food(pos, food_type, scale=3, quantity=quantity, price=price)
             food_group.add(new_food)
 
-            # Создаем NPC (если хватило уникальных)
+            # Создаем NPC
             if i < len(npcs_for_food):
                 npc_info = npcs_for_food[i]
                 npc_pos = (pos[0], pos[1] - 60)
@@ -196,10 +204,6 @@ def Game(player_id, player_email, player_balance, player_name):
                 py.quit()
                 sys.exit()
             if event.type == py.MOUSEBUTTONDOWN:
-                # Выход из игры
-                if exit_button.is_clicked(event.pos):
-                    clear_player_data()
-                    return
                 # Сначала проверяем клики по кнопкам
                 if not game_states["start_button_completed"] and not game_states["is_market_day"] and start.is_clicked(
                         event.pos):
@@ -222,16 +226,15 @@ def Game(player_id, player_email, player_balance, player_name):
                 if game_states["is_market_day"] or game_states["return_button_shown"]:
                     for food in food_group:
                         if food.is_clicked(event.pos, game_states["camera_y"]):
-                            inventory[food.type] += 1
-                            food.decrease_quantity()
-                            price = menu_prices.get(food.type, 10)
-                            if player_balance >= price:
+                            if player_balance >= food.price:
+                                player_balance -= food.price
                                 inventory[food.type] += 1
-                                player_balance -= price
-                                coin_display.update_balance(player_balance, -price)
-                                food.kill()
-                            else:
-                                print("Недостаточно монет!")
+                                food.quantity -= 1
+
+                                if food.quantity <= 0:
+                                    food.kill()
+                                else:
+                                    food.update_ui()
 
         # Обработка состояний игры
         if game_states["is_working_day"] and handle_movement(player, game_states["player_path"],
@@ -267,7 +270,7 @@ def Game(player_id, player_email, player_balance, player_name):
         if game_states["return_button_shown"]:
             return_button.draw(screen)
 
-        # Отрисока еды
+        # Отрисовка еды
         food_group.update()
         for food in food_group:
             food.draw(screen, game_states["camera_y"])
@@ -275,9 +278,7 @@ def Game(player_id, player_email, player_balance, player_name):
         # Обновляем и рисуем монеты
         coin_display.update()
         coin_display.draw(screen, player_balance)
-
-        exit_button.draw(screen)
-
+        day_display.draw(screen)
         py.display.flip()
         clock.tick(60)
 
