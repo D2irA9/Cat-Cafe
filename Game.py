@@ -132,7 +132,7 @@ def Game(player_id, player_email, player_balance, player_name):
         [start, (640 if start[0] == -24 else -24, start[1]), start]
         for start in start_positions
     ]
-    reverse_player_path = []
+    player_path_market = []
 
     # Таймер и активные NPC
     npc_spawn_timer = 0
@@ -178,8 +178,9 @@ def Game(player_id, player_email, player_balance, player_name):
                 available_npcs.extend(npc_data)
 
     def spawn_food_with_npc():
+        """Торговцы"""
         food_group.empty()
-        for npc in [n for n in active_npcs if hasattr(n, 'is_market_npc')]:
+        for npc in [n for n in active_npcs if hasattr(n, "is_market_npc")]:
             npc.kill()
 
         random.shuffle(npc_data)
@@ -204,7 +205,7 @@ def Game(player_id, player_email, player_balance, player_name):
     def remove_completed_npcs():
         """Удаляет завершивших путь NPC"""
         for npc in active_npcs[:]:
-            if hasattr(npc, 'path_completed') and npc.path_completed:
+            if hasattr(npc, "path_completed") and npc.path_completed:
                 all_sprites.remove(npc)
                 active_npcs.remove(npc)
                 if npc.info not in available_npcs:
@@ -239,8 +240,9 @@ def Game(player_id, player_email, player_balance, player_name):
             else:
                 game_states["current_path_index"] += 1
 
+        # Обновление позиции камеры
         if camera_y < target_camera_y:
-            game_states["camera_y"] += 5
+            game_states["camera_y"] += 5  # Увеличьте значение, если хотите, чтобы камера двигалась быстрее
 
         return game_states["current_path_index"] >= len(path) and camera_y >= target_camera_y
 
@@ -269,11 +271,14 @@ def Game(player_id, player_email, player_balance, player_name):
                         event.pos):
                     game_states["is_working_day"] = True
                     game_states["current_path_index"] = 0
-                elif game_states["start_button_completed"] and not game_states["is_market_day"] and go_to_market.is_clicked(event.pos):
+
+                elif game_states["start_button_completed"] and not game_states[
+                    "is_market_day"] and go_to_market.is_clicked(event.pos):
                     game_states["is_market_day"] = True
                     game_states["current_path_index"] = 0
                     spawn_food_with_npc()
-                    reverse_player_path = game_states["player_path_market"][::-1]
+                    # Сохраняем путь на рынок
+                    player_path_market = game_states["player_path_market"]  # Сохраняем путь на рынок
                 elif game_states["return_button_shown"] and return_button.is_clicked(event.pos):
                     game_states["is_market_day"] = False
                     game_states["return_button_shown"] = False
@@ -284,7 +289,7 @@ def Game(player_id, player_email, player_balance, player_name):
                     for food in food_group:
                         food.kill()
                     # Используем обратный путь
-                    game_states["player_path"] = reverse_player_path
+                    game_states["player_path"] = player_path_market[::-1]
 
                 if game_states["is_market_day"] or game_states["return_button_shown"]:
                     for food in food_group:
@@ -309,9 +314,18 @@ def Game(player_id, player_email, player_balance, player_name):
         elif game_states["is_market_day"] and handle_movement(player, game_states["player_path_market"],
                                                               game_states["camera_y"],
                                                               game_states["target_camera_y_market"]):
-            game_states["is_market_day"] = False
-            game_states["return_button_shown"] = True
-            player.direction = "inaction"
+            # Проверяем, достиг ли игрок конца пути на рынок
+            if game_states["current_path_index"] >= len(game_states["player_path_market"]):
+                game_states["is_market_day"] = False  # Завершаем состояние рынка
+                game_states["return_button_shown"] = True  # Показываем кнопку "Вернуться"
+                player.direction = "inaction"  # Устанавливаем анимацию в "инактивное" состояние
+
+        elif game_states["return_button_shown"]:
+            # Если кнопка "Вернуться" показана, не обрабатываем движение игрока
+            if handle_movement(player, game_states["player_path"][::-1], game_states["camera_y"],
+                               game_states["target_camera_y"]):
+                game_states["is_working_day"] = False
+                player.direction = "inaction"
 
         all_sprites.update()
         screen.fill(WHITE)
