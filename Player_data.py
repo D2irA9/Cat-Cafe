@@ -20,7 +20,7 @@ def save_player_data(id, email, balance, name):
         "balance": current_player_balance,
         "name": current_player_name
     }
-    print(f"Сохраняем данные: {data}")  # Отладочный вывод
+    print(f"Сохраняем данные: {data}")
     try:
         with open(SAVE_FILE, 'w') as f:
             json.dump(data, f)
@@ -39,7 +39,7 @@ def load_player_data():
                 current_player_email = data.get("email")
                 current_player_balance = data.get("balance")
                 current_player_name = data.get("name")
-                print(f"Загруженные данные: {data}")  # Отладочный вывод
+                print(f"Загруженные данные: {data}")
         except json.JSONDecodeError:
             print("Ошибка: файл поврежден. Очищаем данные.")
             clear_player_data()
@@ -57,5 +57,4 @@ def clear_player_data():
     if os.path.exists(SAVE_FILE):
         os.remove(SAVE_FILE)
 
-# При импорте сразу загружаем сохраненные данные
 load_player_data()

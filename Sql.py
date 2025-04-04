@@ -1,5 +1,6 @@
 import pymysql
 import hashlib
+import bcrypt
 
 class Database:
     def __init__(self):
@@ -32,7 +33,7 @@ class Database:
             with self.connection.cursor() as cursor:
                 cursor.execute(query, params)
                 self.connection.commit()
-                return cursor.fetchall()
+                return cursor.fetchall()  # Возвращаем все результаты запроса
 
         except pymysql.MySQLError as e:
             print(f"Ошибка '{e}' при выполнении запроса: {query}")
@@ -135,38 +136,39 @@ class Database:
         self.add_MenuClient()
 
     def encrypt_password(self, password):
-        """Шифрует пароль с использованием MD5."""
-        return hashlib.md5(password.encode()).hexdigest()
+        """Шифрует пароль"""
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     def add_player(self, name, email, password, balance=100, day=1):
         """Добавление игрока"""
-        
+
         # Шифрование пароля
         encrypted_password = self.encrypt_password(password)
 
         query = "INSERT INTO `player` (name, day, balance, email, password, regist_date) VALUES (%s, %s, %s, %s, %s, NOW())"
         params = (name, day, balance, email, encrypted_password)
 
-        result, _ = self.execute_query(query, params)
-        if result is not None:
-            print("Игрок успешно добавлен.")
-        else:
-            print("Не удалось добавить игрока.")
+        self.execute_query(query, params)
+        print("Игрок успешно добавлен.")
 
     def check_user(self, email, password):
-        """Проверяет, существует ли пользователь с данным email и паролем"""
-        encrypted_password = self.encrypt_password(password)
-        query = "SELECT * FROM `player` WHERE email = %s AND password = %s"
-        params = (email, encrypted_password)
+        """Проверяет, существует ли пользователь с данным email и паролем."""
+        query = "SELECT password FROM player WHERE email = %s"
+        result = self.execute_query(query, (email,))
 
-        result, _ = self.execute_query(query, params)
-        return result is not None and len(result) > 0
+        if result and len(result) > 0:
+            stored_password = result[0][0]
+            return bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8'))
+        return False
 
     def get_player_id(self, email):
         """Получает ID игрока по email"""
         query = "SELECT id FROM player WHERE email = %s"
-        result, _ = self.execute_query(query, (email,))
-        return result[0][0] if result else None
+        result = self.execute_query(query, (email,))
+
+        if result and len(result) > 0:
+            return result[0][0]  # Возвращаем ID игрока
+        return None  # Если игрок не найден, возвращаем None
 
     def get_player_balance(self, player_id):
         """Получает баланс игрока по ID"""

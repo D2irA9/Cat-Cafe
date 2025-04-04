@@ -20,7 +20,7 @@ class Food(py.sprite.Sprite):
         super().__init__()
         Food.init_resources()
 
-        # Словарь с координатами каждого типа еды
+        # Словарь с едой
         self.food_types = {
             # General-food
             "Pasta": (self._food_sheet, py.Rect(0, 0, 16, 16)),

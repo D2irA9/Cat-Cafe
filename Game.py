@@ -11,6 +11,60 @@ from CoinDisplay import CoinDisplay
 from DayDisplay import DayDisplay
 from Player_data import clear_player_data
 from Sql import Database
+import Home_screen
+
+def exit_confirmation_screen():
+    """Экран подтверждения выхода из игры"""
+
+    py.init()
+    exit_screen = py.display.set_mode((600, 900))
+    py.display.set_caption("Подтверждение выхода")
+
+    # Цвета
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+
+    # Шрифт
+    font = py.font.Font("Font/PixelizerBold.ttf", 36)
+
+    # Кнопки
+    button_yes = Button("Да", 135, 360, 350, 100, BLACK, (220, 20, 60))
+    button_login_another = Button("Войти в другой аккаунт", 120, 480, 380, 100, BLACK, (152, 251, 152))
+    button_no = Button("Нет", 135, 600, 350, 100, BLACK, (30, 144, 255))
+
+    while True:
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                py.quit()
+                sys.exit()
+
+            if event.type == py.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = py.mouse.get_pos()
+
+                if button_yes.is_clicked(mouse_pos):
+                    py.quit()
+                    sys.exit()
+
+                if button_login_another.is_clicked(mouse_pos):
+                    clear_player_data()
+                    Home_screen.Home_screen()
+                    return
+
+                if button_no.is_clicked(mouse_pos):
+                    return
+
+        exit_screen.fill(BLACK)
+
+        header_surface = font.render("Выйти из игры?", True, WHITE)
+        header_rect = header_surface.get_rect(center=(exit_screen.get_width() // 2, 50))
+        exit_screen.blit(header_surface, header_rect)
+
+        # Отрисовка кнопок
+        button_yes.draw(exit_screen)
+        button_login_another.draw(exit_screen)
+        button_no.draw(exit_screen)
+
+        py.display.flip()
 
 def Game(player_id, player_email, player_balance, player_name):
     """Игра"""
@@ -78,6 +132,7 @@ def Game(player_id, player_email, player_balance, player_name):
         [start, (640 if start[0] == -24 else -24, start[1]), start]
         for start in start_positions
     ]
+    reverse_player_path = []
 
     # Таймер и активные NPC
     npc_spawn_timer = 0
@@ -203,8 +258,13 @@ def Game(player_id, player_email, player_balance, player_name):
             if event.type == py.QUIT:
                 py.quit()
                 sys.exit()
+
+            if event.type == py.KEYDOWN:
+                if event.key == py.K_ESCAPE:
+                    exit_confirmation_screen()
+
             if event.type == py.MOUSEBUTTONDOWN:
-                # Сначала проверяем клики по кнопкам
+                # Проверка клики по кнопкам
                 if not game_states["start_button_completed"] and not game_states["is_market_day"] and start.is_clicked(
                         event.pos):
                     game_states["is_working_day"] = True
@@ -213,6 +273,7 @@ def Game(player_id, player_email, player_balance, player_name):
                     game_states["is_market_day"] = True
                     game_states["current_path_index"] = 0
                     spawn_food_with_npc()
+                    reverse_player_path = game_states["player_path_market"][::-1]
                 elif game_states["return_button_shown"] and return_button.is_clicked(event.pos):
                     game_states["is_market_day"] = False
                     game_states["return_button_shown"] = False
@@ -222,6 +283,8 @@ def Game(player_id, player_email, player_balance, player_name):
                     # Удаляем всю еду при возвращении
                     for food in food_group:
                         food.kill()
+                    # Используем обратный путь
+                    game_states["player_path"] = reverse_player_path
 
                 if game_states["is_market_day"] or game_states["return_button_shown"]:
                     for food in food_group:
@@ -265,8 +328,6 @@ def Game(player_id, player_email, player_balance, player_name):
                 start.draw(screen)
             elif not game_states["return_button_shown"]:
                 go_to_market.draw(screen)
-
-        # Отрисовка кнопки "Вернуться"
         if game_states["return_button_shown"]:
             return_button.draw(screen)
 
@@ -279,6 +340,6 @@ def Game(player_id, player_email, player_balance, player_name):
         coin_display.update()
         coin_display.draw(screen, player_balance)
         day_display.draw(screen)
+
         py.display.flip()
         clock.tick(60)
-
