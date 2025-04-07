@@ -13,9 +13,10 @@ from Player_data import clear_player_data
 from Sql import Database
 import Home_screen
 
+py.init()
+
 def exit_confirmation_screen():
     """Экран подтверждения выхода из игры"""
-    py.init()
     exit_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Подтверждение выхода")
 
@@ -65,12 +66,8 @@ def exit_confirmation_screen():
 
         py.display.flip()
 
-
-
 def Game(player_id, player_email, player_balance, player_name):
     """Игра"""
-    py.init()
-
     screen = py.display.set_mode((640, 960))
     py.display.set_caption("Cat-Cafe")
 
@@ -145,6 +142,27 @@ def Game(player_id, player_email, player_balance, player_name):
     menu_prices = db.get_menu_items()
     db.close()
 
+    used_npcs = []
+    used_foods = []
+
+    def get_random_npc():
+        """Получает случайного NPC, который еще не был использован"""
+        available_npcs = [npc for npc in npc_data if npc not in used_npcs]
+        if available_npcs:
+            npc = random.choice(available_npcs)
+            used_npcs.append(npc)
+            return npc
+        return None
+
+    def get_random_food():
+        """Получает случайную еду, которая еще не была использована"""
+        available_foods = [food for food in menu_prices.keys() if food not in used_foods]
+        if available_foods:
+            food = random.choice(available_foods)
+            used_foods.append(food)
+            return food
+        return None
+
     if not menu_prices:
         menu_prices = {
             "Pasta": 51, "Tacos": 17, "Ramen": 33, "Hamburg": 29,
@@ -179,7 +197,7 @@ def Game(player_id, player_email, player_balance, player_name):
                 available_npcs.extend(npc_data)
 
     def spawn_food_with_npc():
-        """Торговцы"""
+        """Создает торговцев с едой"""
         food_group.empty()
         for npc in [n for n in active_npcs if hasattr(n, "is_market_npc")]:
             npc.kill()
@@ -188,7 +206,10 @@ def Game(player_id, player_email, player_balance, player_name):
         npcs_for_food = npc_data[:len(FOOD_SPAWN_POINTS)]
 
         for i, pos in enumerate(FOOD_SPAWN_POINTS):
-            food_type = random.choice(list(menu_prices.keys()))
+            food_type = get_random_food()
+            if food_type is None:
+                continue
+
             quantity = random.randint(1, 5)
             price = menu_prices[food_type]
 
@@ -197,7 +218,9 @@ def Game(player_id, player_email, player_balance, player_name):
 
             # Создаем NPC
             if i < len(npcs_for_food):
-                npc_info = npcs_for_food[i]
+                npc_info = get_random_npc()
+                if npc_info is None:
+                    continue
                 npc_pos = (pos[0], pos[1] - 60)
                 new_npc = NPC(npc_pos, scale, npc_info["sprite"], [npc_pos, npc_pos])
                 new_npc.is_market_npc = True
@@ -214,12 +237,11 @@ def Game(player_id, player_email, player_balance, player_name):
 
     def show_market(player_id, player_email, player_balance, player_name):
         """Отображение рынка"""
-        py.init()
         market_screen = py.display.set_mode((640, 960))
         py.display.set_caption("Рынок")
 
         # Загруска карты рынка
-        market_map = load_pygame("Map/Marcet.tmx")
+        market_map = load_pygame("Map/Market.tmx")
         market_tile_group = py.sprite.Group()
 
         # Вытаскивание всех слоёв карты
@@ -232,8 +254,49 @@ def Game(player_id, player_email, player_balance, player_name):
         # Кнопка "Вернуться"
         return_button = Button("Вернуться", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
 
-        # Создание NPC и еды на рынке
-        spawn_food_with_npc()  # Используйте вашу функцию для создания еды и NPC
+        # Список всех NPC
+        all_npcs = [
+            {"name": "Lyubava", "sprite": "Sprite/client/Lyubava.png"},
+            {"name": "Panteleimon", "sprite": "Sprite/client/Panteleimon.png"},
+            {"name": "Vasiliy", "sprite": "Sprite/client/Vasiliy.png"},
+            {"name": "Khariton", "sprite": "Sprite/client/Khariton.png"},
+            {"name": "Nona", "sprite": "Sprite/client/Nona.png"},
+            {"name": "Yevsey", "sprite": "Sprite/client/Yevsey.png"},
+            {"name": "Kostya", "sprite": "Sprite/client/Kostya.png"},  # Исключаем
+            {"name": "Viola", "sprite": "Sprite/client/Viola.png"},  # Исключаем
+        ]
+
+        # Фильтруем NPC, чтобы оставить только тех, кто будет торговцами
+        trader_npcs = [npc for npc in all_npcs if npc["name"] not in ["Kostya", "Viola"]]
+
+        # Позиции для NPC и еды
+        spawn_points = [
+            (110, 140),  # Позиция NPC 1
+            (370, 140),  # Позиция NPC 2
+            (110, 400),  # Позиция NPC 3
+            (370, 400)  # Позиция NPC 4
+        ]
+
+        food_types = list(menu_prices.keys())
+        for i, pos in enumerate(spawn_points):
+            food_type = get_random_food()  # Получаем случайную еду
+            if food_type is None:
+                continue  # Если еды больше нет, пропускаем
+
+            quantity = random.randint(1, 5)
+            price = menu_prices[food_type]
+
+            # Создаем еду
+            new_food = Food((pos[0] + 45, pos[1] + 150), food_type, scale=3, quantity=quantity,
+                            price=price)  # Позиция еды ниже NPC
+            food_group.add(new_food)
+
+            # Создаем NPC только из списка торговцев
+            npc_info = random.choice(trader_npcs)  # Выбираем случайного торговца
+            npc_pos = (pos[0], pos[1])  # Позиция NPC
+            new_npc = NPC(npc_pos, scale, npc_info["sprite"], [npc_pos, npc_pos])
+            new_npc.is_market_npc = True
+            all_sprites.add(new_npc)
 
         while True:
             for event in py.event.get():
@@ -245,16 +308,31 @@ def Game(player_id, player_email, player_balance, player_name):
                     if return_button.is_clicked(event.pos):
                         return  # Вернуться в основное меню
 
+                    # Проверка кликов по еде
+                    for food in food_group:
+                        if food.is_clicked(event.pos):
+                            if player_balance >= food.price:
+                                player_balance -= food.price
+                                inventory[food.type] += 1
+                                food.decrease_quantity()  # Уменьшаем количество еды
+                            else:
+                                coin_display.update_text_color(coin_display.negative_color)
+
             market_screen.fill(WHITE)
 
             # Отрисовка плиток
             for tile in market_tile_group:
                 market_screen.blit(tile.image, (tile.rect.x, tile.rect.y))
 
+            # Отрисовка NPC
+            for npc in all_sprites:
+                if isinstance(npc, NPC):
+                    market_screen.blit(npc.image, npc.rect.topleft)
+
             # Отрисовка еды
             food_group.update()
             for food in food_group:
-                food.draw(market_screen, 0)  # 0, так как на рынке камера не нужна
+                food.draw(market_screen, 0)
 
             # Отрисовка кнопки "Вернуться"
             return_button.draw(market_screen)
@@ -308,10 +386,6 @@ def Game(player_id, player_email, player_balance, player_name):
             game_states["camera_y"] += 5
         if camera_y > target_camera_y:
             game_states["camera_y"] -= 5
-            print("Moving up!")
-
-        print(f"Camera Y: {game_states['camera_y']}, Target: {game_states['target_camera_y']}")
-
         return game_states["current_path_index"] >= len(path) and abs(camera_y - target_camera_y) < 5
 
 
@@ -340,11 +414,9 @@ def Game(player_id, player_email, player_balance, player_name):
                     game_states["is_working_day"] = True
                     game_states["current_path_index"] = 0
                 # Идти на рынок
-
                 if game_states["start_button_show"] and not game_states["is_market_day"] and go_to_market.is_clicked(
                         event.pos):
                     show_market(player_id, player_email, player_balance, player_name)
-
                 # Вернутся
                 elif game_states["return_button_show"] and return_button.is_clicked(event.pos):
                     game_states["is_returning"] = True
@@ -374,27 +446,26 @@ def Game(player_id, player_email, player_balance, player_name):
                                 else:
                                     food.update_ui()
 
-        # Обработка состояний игры
+        # Начать рабочий день
         if game_states["is_working_day"]:
             if handle_movement(player, game_states["player_path"], game_states["camera_y"], game_states["target_camera_y"]):
                 game_states["is_working_day"] = False
                 game_states["start_button_show"] = True
                 player.direction = "inaction"
-
+        # Купить
         elif game_states["is_market_day"]:
             if handle_movement(player, game_states["player_path_market"], game_states["camera_y"], game_states["target_camera_y_market"]):
                 game_states["is_market_day"] = False
                 game_states["return_button_show"] = True
                 player.direction = "inaction"
-
-
+        # Вернутся
         elif game_states["is_returning"]:
             if handle_movement(player, game_states["player_path_return_caf"], game_states["camera_y"], 960):
                 game_states["is_returning"] = False
                 game_states["open_button_show"] = True
                 player.direction = "inaction"
                 game_states["camera_y"] = 960
-
+        # Открыть кафе
         elif game_states["is_open"]:
             game_states["open_button_show"] = False
             player.direction = "inaction"
@@ -402,7 +473,7 @@ def Game(player_id, player_email, player_balance, player_name):
         all_sprites.update()
         screen.fill(WHITE)
 
-        # Отрисовка
+        # Отрисовка карты
         for tile in tile_group:
             screen.blit(tile.image, (tile.rect.x, tile.rect.y - game_states["camera_y"]))
         for sprite in all_sprites:
@@ -424,7 +495,7 @@ def Game(player_id, player_email, player_balance, player_name):
         for food in food_group:
             food.draw(screen, game_states["camera_y"])
 
-        # Обновляем и рисуем монеты
+        # Монеты и дни
         coin_display.update()
         coin_display.draw(screen, player_balance)
         day_display.draw(screen)

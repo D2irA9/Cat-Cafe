@@ -71,6 +71,11 @@ class CoinDisplay:
             self.current_text_color = self.positive_color
             self.color_change_timer = 30
 
+    def update_text_color(self, color):
+        """Изменяет цвет текста"""
+        self.current_text_color = color
+        self.color_change_timer = 30
+
     def draw(self, screen, balance):
         """Отрисовка элемента с балансом"""
 

@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "Marcet.tmx",
+    "activeFile": "Market.tmx",
     "expandedProjectPaths": [
     ],
     "file.lastUsedOpenFilter": "Все файлы (*)",
@@ -37,7 +37,15 @@
             "selectedLayer": 2,
             "viewCenter": {
                 "x": 80.00944064196365,
-                "y": 120.08496577767288
+                "y": 86.09865470852017
+            }
+        },
+        "Market.tmx": {
+            "scale": 3.5,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 77.85714285714285,
+                "y": 121.57142857142856
             }
         },
         "Player.tsx": {
@@ -90,8 +98,7 @@
         "Wooden_House_Walls_Tilset.tsx",
         "map.tmx",
         "Player.tsx",
-        "marcert.tmx",
-        "Marcet.tmx"
+        "Market.tmx"
     ],
     "project": "Map.tiled-project",
     "recentFiles": [
@@ -101,12 +108,12 @@
         "Wooden_House_Walls_Tilset.tsx",
         "map.tmx",
         "Player.tsx",
-        "marcert.tmx",
+        "Market.tmx",
         "Marcet.tmx",
+        "marcert.tmx",
         "Basic_Grass_Biom_things.tsx",
         "Basic_Furniture.tsx",
-        "Doors.tsx",
-        "Fences.tsx"
+        "Doors.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
