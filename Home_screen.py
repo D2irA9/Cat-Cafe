@@ -17,7 +17,7 @@ def Home_screen():
     """Начальный экран"""
 
     py.init()
-    screen = py.display.set_mode((600, 900))
+    screen = py.display.set_mode((640, 960))
     py.display.set_caption("Hi")
 
     # Цвета
@@ -70,7 +70,7 @@ def Home_screen():
 def show_welcome_screen(name):
     """Приветствие"""
     py.init()
-    screen = py.display.set_mode((600, 900))
+    screen = py.display.set_mode((640, 960))
     clock = py.time.Clock()
     font = py.font.Font("Font/PixelizerBold.ttf", 48)
 
@@ -104,7 +104,7 @@ def No_button(WHITE, BLACK, font):
     global current_player_id, current_player_email, current_player_balance, current_player_name
 
     py.init()
-    new_screen = py.display.set_mode((600, 900))
+    new_screen = py.display.set_mode((640, 960))
     py.display.set_caption("Регистрация")
 
     # Ввод текста
@@ -254,7 +254,7 @@ def Yes_button(WHITE, BLACK, font):
     global current_player_id, current_player_email, current_player_balance, current_player_name
 
     py.init()
-    new_screen = py.display.set_mode((600, 900))
+    new_screen = py.display.set_mode((640, 960))
     py.display.set_caption("Вход")
 
     # Переменные для ввода текста

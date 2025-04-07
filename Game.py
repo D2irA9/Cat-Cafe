@@ -15,7 +15,6 @@ import Home_screen
 
 def exit_confirmation_screen():
     """Экран подтверждения выхода из игры"""
-
     py.init()
     exit_screen = py.display.set_mode((600, 900))
     py.display.set_caption("Подтверждение выхода")
@@ -66,6 +65,8 @@ def exit_confirmation_screen():
 
         py.display.flip()
 
+
+
 def Game(player_id, player_email, player_balance, player_name):
     """Игра"""
     py.init()
@@ -105,8 +106,9 @@ def Game(player_id, player_email, player_balance, player_name):
 
     # Кнопки
     start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
-    go_to_market = Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
+    go_to_market = Button("Купить", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
     return_button = Button("Вернуться", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
+    open_caff = Button("Открыть кафе", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
 
     # Игрок
     player = Player((130, 310), scale=4)
@@ -132,7 +134,6 @@ def Game(player_id, player_email, player_balance, player_name):
         [start, (640 if start[0] == -24 else -24, start[1]), start]
         for start in start_positions
     ]
-    player_path_market = []
 
     # Таймер и активные NPC
     npc_spawn_timer = 0
@@ -211,17 +212,79 @@ def Game(player_id, player_email, player_balance, player_name):
                 if npc.info not in available_npcs:
                     available_npcs.append(npc.info)
 
+    def show_market(player_id, player_email, player_balance, player_name):
+        """Отображение рынка"""
+        py.init()
+        market_screen = py.display.set_mode((640, 960))
+        py.display.set_caption("Рынок")
+
+        # Загруска карты рынка
+        market_map = load_pygame("Map/Marcet.tmx")
+        market_tile_group = py.sprite.Group()
+
+        # Вытаскивание всех слоёв карты
+        for layer in market_map.visible_layers:
+            if hasattr(layer, "data"):
+                for x, y, surf in layer.tiles():
+                    pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
+                    Tile(pos=pos, surf=surf, groups=market_tile_group, scale=scale)
+
+        # Кнопка "Вернуться"
+        return_button = Button("Вернуться", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
+
+        # Создание NPC и еды на рынке
+        spawn_food_with_npc()  # Используйте вашу функцию для создания еды и NPC
+
+        while True:
+            for event in py.event.get():
+                if event.type == py.QUIT:
+                    py.quit()
+                    sys.exit()
+
+                if event.type == py.MOUSEBUTTONDOWN:
+                    if return_button.is_clicked(event.pos):
+                        return  # Вернуться в основное меню
+
+            market_screen.fill(WHITE)
+
+            # Отрисовка плиток
+            for tile in market_tile_group:
+                market_screen.blit(tile.image, (tile.rect.x, tile.rect.y))
+
+            # Отрисовка еды
+            food_group.update()
+            for food in food_group:
+                food.draw(market_screen, 0)  # 0, так как на рынке камера не нужна
+
+            # Отрисовка кнопки "Вернуться"
+            return_button.draw(market_screen)
+
+            # Обновляем и рисуем монеты и дни
+            coin_display.update()
+            coin_display.draw(market_screen, player_balance)
+            day_display.draw(market_screen)
+
+            py.display.flip()
+            clock.tick(60)
+
     clock = py.time.Clock()
     game_states = {
         "is_working_day": False,
         "is_market_day": False,
-        "start_button_completed": False,
-        "return_button_shown": False,
+        "is_returning": False,
+        "is_open": False,
+
+        "start_button_show": False,
+        "return_button_show": False,
+        "open_button_show": False,
+
         "camera_y": 0,
         "target_camera_y": 960,
         "target_camera_y_market": 1920,
+
         "player_path": [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)],
         "player_path_market": [(250, 1070), (450, 1070), (450, 2080), (230, 2080)],
+        "player_path_return_caf": [(230, 2080), (230, 1070), (250, 1070)],
         "current_path_index": 0,
     }
 
@@ -242,9 +305,15 @@ def Game(player_id, player_email, player_balance, player_name):
 
         # Обновление позиции камеры
         if camera_y < target_camera_y:
-            game_states["camera_y"] += 5  # Увеличьте значение, если хотите, чтобы камера двигалась быстрее
+            game_states["camera_y"] += 5
+        if camera_y > target_camera_y:
+            game_states["camera_y"] -= 5
+            print("Moving up!")
 
-        return game_states["current_path_index"] >= len(path) and camera_y >= target_camera_y
+        print(f"Camera Y: {game_states['camera_y']}, Target: {game_states['target_camera_y']}")
+
+        return game_states["current_path_index"] >= len(path) and abs(camera_y - target_camera_y) < 5
+
 
     while True:
         current_time = py.time.get_ticks()
@@ -267,65 +336,68 @@ def Game(player_id, player_email, player_balance, player_name):
 
             if event.type == py.MOUSEBUTTONDOWN:
                 # Проверка клики по кнопкам
-                if not game_states["start_button_completed"] and not game_states["is_market_day"] and start.is_clicked(
-                        event.pos):
+                if not game_states["start_button_show"] and not game_states["is_market_day"] and start.is_clicked(event.pos):
                     game_states["is_working_day"] = True
                     game_states["current_path_index"] = 0
+                # Идти на рынок
 
-                elif game_states["start_button_completed"] and not game_states[
-                    "is_market_day"] and go_to_market.is_clicked(event.pos):
-                    game_states["is_market_day"] = True
+                if game_states["start_button_show"] and not game_states["is_market_day"] and go_to_market.is_clicked(
+                        event.pos):
+                    show_market(player_id, player_email, player_balance, player_name)
+
+                # Вернутся
+                elif game_states["return_button_show"] and return_button.is_clicked(event.pos):
+                    game_states["is_returning"] = True
+                    game_states["return_button_show"] = False
                     game_states["current_path_index"] = 0
-                    spawn_food_with_npc()
-                    # Сохраняем путь на рынок
-                    player_path_market = game_states["player_path_market"]  # Сохраняем путь на рынок
-                elif game_states["return_button_shown"] and return_button.is_clicked(event.pos):
-                    game_states["is_market_day"] = False
-                    game_states["return_button_shown"] = False
-                    player.rect.topleft = (130, 310)
-                    game_states["camera_y"] = 0
-                    game_states["current_path_index"] = 0
-                    # Удаляем всю еду при возвращении
+                    game_states["target_camera_y"] = 960
+
+                    # Очищаем еду и NPC рынка
                     for food in food_group:
                         food.kill()
-                    # Используем обратный путь
-                    game_states["player_path"] = player_path_market[::-1]
+                    for npc in [n for n in active_npcs if hasattr(n, "is_market_npc")]:
+                        npc.kill()
 
-                if game_states["is_market_day"] or game_states["return_button_shown"]:
+                elif game_states["open_button_show"] and open_caff.is_clicked(event.pos):
+                    print("Кафе открыто!")
+                    game_states["current_path_index"] = 0
+
+                if game_states["is_market_day"] or game_states["return_button_show"]:
                     for food in food_group:
                         if food.is_clicked(event.pos, game_states["camera_y"]):
                             if player_balance >= food.price:
                                 player_balance -= food.price
                                 inventory[food.type] += 1
                                 food.quantity -= 1
-
                                 if food.quantity <= 0:
                                     food.kill()
                                 else:
                                     food.update_ui()
 
         # Обработка состояний игры
-        if game_states["is_working_day"] and handle_movement(player, game_states["player_path"],
-                                                             game_states["camera_y"], game_states["target_camera_y"]):
-            game_states["is_working_day"] = False
-            game_states["start_button_completed"] = True
-            player.direction = "inaction"
-
-        elif game_states["is_market_day"] and handle_movement(player, game_states["player_path_market"],
-                                                              game_states["camera_y"],
-                                                              game_states["target_camera_y_market"]):
-            # Проверяем, достиг ли игрок конца пути на рынок
-            if game_states["current_path_index"] >= len(game_states["player_path_market"]):
-                game_states["is_market_day"] = False  # Завершаем состояние рынка
-                game_states["return_button_shown"] = True  # Показываем кнопку "Вернуться"
-                player.direction = "inaction"  # Устанавливаем анимацию в "инактивное" состояние
-
-        elif game_states["return_button_shown"]:
-            # Если кнопка "Вернуться" показана, не обрабатываем движение игрока
-            if handle_movement(player, game_states["player_path"][::-1], game_states["camera_y"],
-                               game_states["target_camera_y"]):
+        if game_states["is_working_day"]:
+            if handle_movement(player, game_states["player_path"], game_states["camera_y"], game_states["target_camera_y"]):
                 game_states["is_working_day"] = False
+                game_states["start_button_show"] = True
                 player.direction = "inaction"
+
+        elif game_states["is_market_day"]:
+            if handle_movement(player, game_states["player_path_market"], game_states["camera_y"], game_states["target_camera_y_market"]):
+                game_states["is_market_day"] = False
+                game_states["return_button_show"] = True
+                player.direction = "inaction"
+
+
+        elif game_states["is_returning"]:
+            if handle_movement(player, game_states["player_path_return_caf"], game_states["camera_y"], 960):
+                game_states["is_returning"] = False
+                game_states["open_button_show"] = True
+                player.direction = "inaction"
+                game_states["camera_y"] = 960
+
+        elif game_states["is_open"]:
+            game_states["open_button_show"] = False
+            player.direction = "inaction"
 
         all_sprites.update()
         screen.fill(WHITE)
@@ -338,11 +410,13 @@ def Game(player_id, player_email, player_balance, player_name):
 
         # Отрисовка кнопок
         if not game_states["is_working_day"] and not game_states["is_market_day"]:
-            if not game_states["start_button_completed"]:
+            if not game_states["start_button_show"]:
                 start.draw(screen)
-            elif not game_states["return_button_shown"]:
+            elif game_states["open_button_show"]:
+                open_caff.draw(screen)
+            elif not game_states["return_button_show"]:
                 go_to_market.draw(screen)
-        if game_states["return_button_shown"]:
+        if game_states["return_button_show"]:
             return_button.draw(screen)
 
         # Отрисовка еды

@@ -3,41 +3,49 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "map.tmx",
+    "activeFile": "Marcet.tmx",
     "expandedProjectPaths": [
     ],
     "file.lastUsedOpenFilter": "Все файлы (*)",
     "fileStates": {
         "Basic_Furniture.tsx": {
-            "scaleInDock": 4,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "Basic_Grass_Biom_things.tsx": {
-            "scaleInDock": 4,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "Doors.tsx": {
-            "scaleInDock": 8,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "Fences.tsx": {
-            "scaleInDock": 8,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "Grass.tsx": {
-            "scaleInDock": 3,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "Hills.tsx": {
-            "scaleInDock": 3,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
+        "Marcet.tmx": {
+            "scale": 3.5308333333333333,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 80.00944064196365,
+                "y": 120.08496577767288
+            }
+        },
         "Player.tsx": {
-            "scaleInDock": 2,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "Tilled_Dirt.tsx": {
-            "scaleInDock": 3,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "Wooden_House_Walls_Tilset.tsx": {
@@ -48,8 +56,16 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": -58.75,
-                "y": 330
+                "x": 93,
+                "y": 470.75
+            }
+        },
+        "marcert.tmx": {
+            "scale": 4,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 102.375,
+                "y": 126.25
             }
         },
         "new_map.tmx": {
@@ -62,7 +78,7 @@
         }
     },
     "last.imagePath": "C:/other/code/python/Cat-Cafe/Sprite/Player",
-    "map.height": 45,
+    "map.height": 15,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
@@ -73,7 +89,9 @@
         "Tilled_Dirt.tsx",
         "Wooden_House_Walls_Tilset.tsx",
         "map.tmx",
-        "Player.tsx"
+        "Player.tsx",
+        "marcert.tmx",
+        "Marcet.tmx"
     ],
     "project": "Map.tiled-project",
     "recentFiles": [
@@ -81,13 +99,14 @@
         "Hills.tsx",
         "Tilled_Dirt.tsx",
         "Wooden_House_Walls_Tilset.tsx",
-        "Player.tsx",
         "map.tmx",
+        "Player.tsx",
+        "marcert.tmx",
+        "Marcet.tmx",
         "Basic_Grass_Biom_things.tsx",
         "Basic_Furniture.tsx",
         "Doors.tsx",
-        "Fences.tsx",
-        "new_map.tmx"
+        "Fences.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
