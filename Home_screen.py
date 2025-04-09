@@ -3,17 +3,8 @@ import sys
 from Button import Button
 from Sql import Database
 from Game import Game
-from Player_data import (
-    current_player_id,
-    current_player_email,
-    current_player_balance,
-    current_player_name,
-    save_player_data,
-    load_player_data
-)
 
 def Home_screen():
-    load_player_data()
     """Начальный экран"""
 
     py.init()
@@ -26,13 +17,6 @@ def Home_screen():
 
     # Шрифт
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
-
-    # Проверка, есть ли данные игрока
-    if current_player_id is not None:
-        # Если данные загружены, показываем приветствие
-        show_welcome_screen(current_player_name)
-        Game(current_player_id, current_player_email, current_player_balance, current_player_name)
-        return
 
     # Кнопки
     button_yes = Button("Да", 135, 360, 350, 100, WHITE, (30, 144, 255))
@@ -160,8 +144,6 @@ def No_button(WHITE, BLACK, font):
                                     # Получаем ID нового игрока
                                     current_player_id = db.get_player_id(current_player_email)
                                     db.close()
-                                    # Сохраняем данные игрока
-                                    save_player_data(current_player_id, current_player_email, current_player_balance, current_player_name)
                                     # Сбрасываем поля ввода
                                     input_texts = ['', '', '']
                                     active_input = -1
@@ -305,9 +287,6 @@ def Yes_button(WHITE, BLACK, font):
                                     current_player_balance = result[0][2]
                                     current_player_email = email
                                     db.close()
-
-                                    # Сохраняем данные игрока
-                                    save_player_data(current_player_id, current_player_email, current_player_balance, current_player_name)
 
                                     # Запуск игры
                                     Game(current_player_id, current_player_email, current_player_balance,

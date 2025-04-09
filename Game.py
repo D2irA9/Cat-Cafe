@@ -9,12 +9,13 @@ from NPS import NPC
 from Food import Food
 from CoinDisplay import CoinDisplay
 from DayDisplay import DayDisplay
-from Player_data import clear_player_data
+# from Player_data import clear_player_data
 from Sql import Database
 import Home_screen
 
 py.init()
 font = py.font.Font("Font/PixelizerBold.ttf", 36)
+
 def exit_confirmation_screen():
     """Экран подтверждения выхода из игры"""
     exit_screen = py.display.set_mode((600, 900))
@@ -43,7 +44,7 @@ def exit_confirmation_screen():
                     sys.exit()
 
                 if button_login_another.is_clicked(mouse_pos):
-                    clear_player_data()
+                    # clear_player_data()
                     Home_screen.Home_screen()
                     return
 
@@ -221,7 +222,7 @@ def Game(player_id, player_email, player_balance, player_name):
             (370, 400)
         ]
 
-        food_group.empty()  # Очищаем группу еды перед добавлением новой
+        food_group.empty()
 
         # Создаем NPC
         trader_npcs = [
@@ -234,9 +235,9 @@ def Game(player_id, player_email, player_balance, player_name):
         ]
 
         for pos in spawn_points:
-            food_type = get_random_food()  # Получаем случайную еду
+            food_type = get_random_food()
             if food_type is None:
-                continue  # Если еды больше нет, пропускаем
+                continue
 
             quantity = random.randint(1, 5)
             price = menu_prices[food_type]
@@ -260,6 +261,8 @@ def Game(player_id, player_email, player_balance, player_name):
 
                 if event.type == py.MOUSEBUTTONDOWN:
                     if return_button.is_clicked(event.pos):
+                        if db.check_player_exists(player_id):
+                            db.update_balance(player_id, player_balance)
                         return
 
                     # Проверка кликов по еде
@@ -268,9 +271,8 @@ def Game(player_id, player_email, player_balance, player_name):
                             if player_balance >= food.price:
                                 player_balance -= food.price
                                 inventory[food.type] += 1
-                                food.decrease_quantity()  # Уменьшаем количество еды
-                                food.update_ui()  # Обновляем интерфейс еды
-                                # Обновление баланса
+                                food.decrease_quantity()
+                                food.update_ui()
                                 if db.check_player_exists(player_id):
                                     db.update_balance(player_id, player_balance)
 
@@ -370,7 +372,7 @@ def Game(player_id, player_email, player_balance, player_name):
                 if not game_states["start_button_show"] and not game_states["is_market_day"] and start.is_clicked(event.pos):
                     game_states["is_working_day"] = True
                     game_states["current_path_index"] = 0
-                # Идти на рынок
+                # Рынок
                 if game_states["start_button_show"] and not game_states["is_market_day"] and go_to_market.is_clicked(
                         event.pos):
                     show_market(player_id, player_email, player_balance, player_name)
@@ -410,10 +412,12 @@ def Game(player_id, player_email, player_balance, player_name):
                 game_states["start_button_show"] = True
                 player.direction = "inaction"
         # Купить
-        elif game_states["is_market_day"]:
-            if handle_movement(player, game_states["player_path_market"], game_states["camera_y"], game_states["target_camera_y_market"]):
+        if game_states["is_market_day"]:
+            if handle_movement(player, game_states["player_path_market"], game_states["camera_y"],
+                               game_states["target_camera_y_market"]):
                 game_states["is_market_day"] = False
                 game_states["return_button_show"] = True
+                game_states["open_button_show"] = True  # Показываем кнопку "Открыть кафе"
                 player.direction = "inaction"
         # Вернутся
         elif game_states["is_returning"]:
