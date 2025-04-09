@@ -178,7 +178,7 @@ class Database:
     def get_player_balance(self, player_id):
         """Получает баланс игрока по ID"""
         query = "SELECT balance FROM player WHERE id = %s"
-        result, _ = self.execute_query(query, (player_id,))
+        result = self.execute_query(query, (player_id,))
         return result[0][0] if result else None
 
     def update_balance(self, player_id, new_balance):

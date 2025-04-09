@@ -184,7 +184,7 @@ def No_button(WHITE, BLACK, font):
                                     active_input = -1
                                     # Запускаем игру
                                     show_welcome_screen(current_player_name)
-                                    Game (current_player_id, current_player_email, current_player_balance, current_player_name)
+                                    Game (current_player_id, current_player_email, current_player_name)
 
                                 except Exception as e:
                                     print(f"Ошибка при регистрации: {e}")
@@ -323,7 +323,7 @@ def Yes_button(WHITE, BLACK, font):
                                     db.close()
 
                                     # Запуск игры
-                                    Game(current_player_id, current_player_email, current_player_balance, current_player_name)
+                                    Game(current_player_id, current_player_email, current_player_name)
                                 else:
                                     text_er_surf = font.render("Ошибка получения данных", True, (220, 20, 60))
                                     text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
