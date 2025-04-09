@@ -1,144 +1,211 @@
 import pygame as py
-import sys
-from pytmx.util_pygame import load_pygame
-from Drawing import Tile
-from Player import Player
-from Button import Button
-from Camera import Camera
 
-def Game(WHITE, BLACK):
-    """Запуск игры"""
-    py.init()
 
-    screen = py.display.set_mode((640, 960))
-    py.display.set_caption("Cat-Cafe")
+# SCREEN CLASS FOR WINDOW HAVING THE FUNCTION
+# OF UPDATING THE ONE SCREEN TO ANOTHER SCREEN
 
-    # Загруска карты
-    # map = load_pygame("Map/map.tmx")
-    # tile_group = py.sprite.Group()
-    # player_group = py.sprite.Group()
 
-    # TILE_SIZE = 16
-    # scale = 4
+class Screen():
 
-    # for layer in map.visible_layers:
-    #     if hasattr(layer, 'data'):
-    #         for x, y, surf in layer.tiles():
-    #             pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
-    #             Tile(pos=pos, surf=surf, groups=tile_group, scale=scale)
+    # INITIALIZATION OF WINDOW HAVING TITLE,
+    # WIDTH, HEIGHT AND COLOUR
+    # HERE (0,0,255) IS A COLOUR CODE
+    def __init__(self, title, width=440, height=445,
+                 fill=(0, 0, 255)):
+        # HEIGHT OF A WINDOW
+        self.height = height
+        # TITLE OF A WINDOW
+        self.title = title
+        # WIDTH OF A WINDOW
+        self.width = width
+        # COLOUR CODE
+        self.fill = fill
+        # CURRENT STATE OF A SCREEN
+        self.CurrentState = False
 
-    # camera = Camera(640, 960)
-    # camera_moving = False
-    # camera_target_y = 0  # Целевая позиция камеры
-    # 
-    # sprite_sheet = py.image.load("Sprite/Player/Player.png").convert_alpha()
-    # animations = {
-    #     "inaction": [py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
-    #                  py.transform.scale(sprite_sheet.subsurface((48, 0, 48, 48)), (48 * scale, 48 * scale))],
-    #     "up": [py.transform.scale(sprite_sheet.subsurface((0, 48, 48, 48)), (48 * scale, 48 * scale)),
-    #            py.transform.scale(sprite_sheet.subsurface((144, 48, 48, 48)), (48 * scale, 48 * scale))],
-    #     "down": [py.transform.scale(sprite_sheet.subsurface((0, 0, 48, 48)), (48 * scale, 48 * scale)),
-    #              py.transform.scale(sprite_sheet.subsurface((144, 0, 48, 48)), (48 * scale, 48 * scale))],
-    #     "left": [py.transform.scale(sprite_sheet.subsurface((0, 96, 48, 48)), (48 * scale, 48 * scale)),
-    #              py.transform.scale(sprite_sheet.subsurface((144, 96, 48, 48)), (48 * scale, 48 * scale))],
-    #     "right": [py.transform.scale(sprite_sheet.subsurface((0, 144, 48, 48)), (48 * scale, 48 * scale)),
-    #               py.transform.scale(sprite_sheet.subsurface((144, 144, 48, 48)), (48 * scale, 48 * scale))]
-    # }
-    # 
-    # player = Player(pos=(140, 300), animations=animations, groups=player_group)
-    # 
-    # # Пути для игрока
-    # paths = {
-    #     "start": [("left", 75), ("down", 300), ("left", 50), ("down", 340), ("right", 310), ("down", 110), ("left", 100)],
-    #     "go_store": [("right", 100), ("down", 400), ("left", 150), ("down", 300)]
-    # }
-    # 
-    # buttons = {
-    #     "start": Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185)),
-    #     "go_store": Button("Идти на рынок", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152)),
-    #     "return": Button("Вернуться", 135, 2680, 350, 100, (0, 0, 0), (255, 218, 185)),
-    #     "open": Button("Открыться", 135, 1720, 350, 100, (0, 0, 0), (244, 164, 96))
-    # }
-    # buttons["go_store"].visible = False
+    # DISPLAY THE CURRENT SCREEN OF
+    # A WINDOW AT THE CURRENT STATE
+    def makeCurrentScreen(self):
+        # SET THE TITLE FOR THE CURRENT STATE OF A SCREEN
+        py.display.set_caption(self.title)
+        # SET THE STATE TO ACTIVE
+        self.CurrentState = True
+        # ACTIVE SCREEN SIZE
+        self.screen = py.display.set_mode((self.width,
+                                           self.height))
 
-    # clock = py.time.Clock()
-    # 
-    # # Флаги для управления движением игрока и камеры
-    # player_moving = False
-    # current_path_index = 0
-    # moved_distance = 0
-    # current_path = []  # Текущий путь игрока
+    # THIS WILL SET THE STATE OF A CURRENT STATE TO OFF
+    def endCurrentScreen(self):
+        self.CurrentState = False
 
-    while True:
-        # dt = clock.tick(60) / 1000.0
-        # 
-        # for event in py.event.get():
-        #     if event.type == py.QUIT:
-        #         py.quit()
-        #         sys.exit()
-        #     if event.type == py.KEYDOWN and event.key in (py.K_LALT, py.K_RALT):
-        #         py.quit()
-        #         sys.exit()
-        # 
-        #     if buttons["start"].is_clicked() and not player_moving:
-        #         camera_moving, camera_target_y = True, 960
-        #         buttons["start"].visible = False
-        #         player_moving, current_path = True, paths["start"]
-        #         current_path_index, moved_distance = 0, 0
-        # 
-        #     if buttons["go_store"].is_clicked() and not player_moving:
-        #         camera_moving, camera_target_y = True, 1920  # Устанавливаем целевую позицию камеры
-        #         buttons["go_store"].visible = False  # Скрываем кнопку после нажатия
-        #         player_moving, current_path = True, paths["go_store"]
-        #         current_path_index, moved_distance = 0, 0
-        # 
-        # # Движение камеры
-        # if camera_moving:
-        #     camera.pos.y += camera.speed
-        #     if camera.pos.y >= camera_target_y:
-        #         camera.pos.y = camera_target_y  # Устанавливаем позицию камеры на целевую
-        #         camera_moving = False
-        #         if camera_target_y == 960:
-        #             buttons["go_store"].visible = True  # Показываем кнопку "Идти на рынок"
-        #         elif camera_target_y == 1920:
-        #             buttons["return"].visible = True  # Показываем кнопку "Вернуться"
-        # 
-        # # Движение игрока
-        # if player_moving and current_path_index < len(current_path):
-        #     direction, distance = current_path[current_path_index]
-        #     player.current_animation = direction
-        # 
-        #     if moved_distance < distance:
-        #         if direction == "right":
-        #             player.rect.x += player.speed
-        #         elif direction == "down":
-        #             player.rect.y += player.speed
-        #         elif direction == "left":
-        #             player.rect.x -= player.speed
-        #         elif direction == "up":
-        #             player.rect.y -= player.speed
-        # 
-        #         moved_distance += player.speed
-        #     else:
-        #         moved_distance, current_path_index = 0, current_path_index + 1
-        # 
-        #     if current_path_index >= len(current_path):
-        #         player_moving = False
-        #         player.current_animation = "inaction"
-        # 
-        # # Обновление спрайтов
-        # tile_group.update()
-        # player.update(dt)
-        # 
-        # # Отрисовка
-        # screen.fill(WHITE)
-        # for tile in tile_group:
-        #     screen.blit(tile.image, camera.apply(tile))
-        # screen.blit(player.image, camera.apply(player))
-        # 
-        # # Отрисовка кнопок
-        # for button in buttons.values():
-        #     if button.visible:
-        #         button.draw(screen)
+    # THIS WILL CONFIRM WHETHER THE NAVIGATION OCCURS
+    def checkUpdate(self, fill):
+        # HERE FILL IS THE COLOR CODE
+        self.fill = fill
+        return self.CurrentState
 
-        py.display.flip()
+    # THIS WILL UPDATE THE SCREEN WITH
+    # THE NEW NAVIGATION TAB
+    def screenUpdate(self):
+        if self.CurrentState:
+            self.screen.fill(self.fill)
+
+    # RETURNS THE TITLE OF THE SCREEN
+    def returnTitle(self):
+        return self.screen
+
+
+# NAVIGATION BUTTON CLASS
+
+
+class Button():
+
+    # INITIALIZATION OF BUTTON
+    # COMPONENTS LIKE POSITION OF BUTTON,
+    # COLOR OF BUTTON, FONT COLOR OF BUTTON, FONT SIZE,
+    # TEXT INSIDE THE BUTTON
+    def __init__(self, x, y, sx, sy, bcolour,
+                 fbcolour, font, fcolour, text):
+        # ORIGIN_X COORDINATE OF BUTTON
+        self.x = x
+        # ORIGIN_Y COORDINATE OF BUTTON
+        self.y = y
+        # LAST_X COORDINATE OF BUTTON
+        self.sx = sx
+        # LAST_Y COORDINATE OF BUTTON
+        self.sy = sy
+        # FONT SIZE FOR THE TEXT IN A BUTTON
+        self.fontsize = 25
+        # BUTTON COLOUR
+        self.bcolour = bcolour
+        # RECTANGLE COLOR USED TO DRAW THE BUTTON
+        self.fbcolour = fbcolour
+        # BUTTON FONT COLOR
+        self.fcolour = fcolour
+        # TEXT IN A BUTTON
+        self.text = text
+        # CURRENT IS OFF
+        self.CurrentState = False
+        # FONT OBJECT FROM THE SYSTEM FONTS
+        self.buttonf = py.font.SysFont(font, self.fontsize)
+
+    # DRAW THE BUTTON FOR THE TWO
+    # TABS MENU_SCREEN AND CONTROL TABS MENU
+    def showButton(self, display):
+        if (self.CurrentState):
+            py.draw.rect(display, self.fbcolour,
+                         (self.x, self.y,
+                          self.sx, self.sy))
+        else:
+            py.draw.rect(display, self.fbcolour,
+                         (self.x, self.y,
+                          self.sx, self.sy))
+        # RENDER THE FONT OBJECT FROM THE SYSTEM FONTS
+        textsurface = self.buttonf.render(self.text,
+                                          False, self.fcolour)
+
+        # THIS LINE WILL DRAW THE SURF ONTO THE SCREEN
+        display.blit(textsurface,
+                     ((self.x + (self.sx / 2) -
+                       (self.fontsize / 2) * (len(self.text) / 2) -
+                       5, (self.y + (self.sy / 2) -
+                           (self.fontsize / 2) - 4))))
+
+    # THIS FUNCTION CAPTURE WHETHER
+    # ANY MOUSE EVENT OCCUR ON THE BUTTON
+    def focusCheck(self, mousepos, mouseclick):
+        if (mousepos[0] >= self.x and mousepos[0] <= self.x +
+                self.sx and mousepos[1] >= self.y and mousepos[1]
+                <= self.y + self.sy):
+            self.CurrentState = True
+            # IF MOUSE BUTTON CLICK THEN
+            # NAVIGATE TO THE NEXT OR PREVIOUS TABS
+            return mouseclick[0]
+
+        else:
+            # ELSE LET THE CURRENT STATE TO BE OFF
+            self.CurrentState = False
+            return False
+
+
+# INITIALIZATION OF THE PYGAME
+py.init()
+# INITIALIZATION OF SYSTEM FONTS
+py.font.init()
+
+# CREATING THE OBJECT OF THE
+# CLASS Screen FOR MENU SCREEN
+menuScreen = Screen("Menu Screen")
+
+# CREATING THE OBJECT OF THE
+# CLASS Screen FOR CONTROL SCREEN
+control_bar = Screen("Control Screen")
+
+# CALLING OF THE FUNCTION TO
+# MAKE THE SCREEN FOR THE WINDOW
+win = menuScreen.makeCurrentScreen()
+
+# MENU BUTTON
+MENU_BUTTON = Button(150, 150, 150, 50, (255, 250, 250),
+                     (255, 0, 0), "TimesNewRoman",
+                     (255, 255, 255), "Main Menu")
+
+# CONTROL BUTTON
+CONTROL_BUTTON = Button(150, 150, 150, 50,
+                        (0, 0, 0), (0, 0, 255),
+                        "TimesNewRoman",
+                        (255, 255, 255), "Back")
+
+done = False
+
+toggle = False
+
+# MAIN LOOPING
+while not done:
+    # CALLING OF screenUpdate
+    # function FOR MENU SCREEN
+    menuScreen.screenUpdate()
+
+    # CALLING THE FUNCTION OF CONTROL BAR
+    control_bar.screenUpdate()
+    # STORING THE MOUSE EVENT TO
+    # CHECK THE POSITION OF THE MOUSE
+    mouse_pos = py.mouse.get_pos()
+    # CHECKING THE MOUSE CLICK EVENT
+    mouse_click = py.mouse.get_pressed()
+    # KEY PRESSED OR NOT
+    keys = py.key.get_pressed()
+
+    # MENU BAR CODE TO ACCESS
+    # CHECKING MENU SCREEN FOR ITS UPDATE
+    if menuScreen.checkUpdate((25, 0, 255)):
+        control_barbutton = MENU_BUTTON.focusCheck(mouse_pos,
+                                                   mouse_click)
+        MENU_BUTTON.showButton(menuScreen.returnTitle())
+
+        if control_barbutton:
+            win = control_bar.makeCurrentScreen()
+            menuScreen.endCurrentScreen()
+
+    # CONTROL BAR CODE TO ACCESS
+    # CHECKING CONTROL SCREEN FOR ITS UPDATE
+    elif control_bar.checkUpdate((255, 0, 255)):
+        return_back = CONTROL_BUTTON.focusCheck(mouse_pos,
+                                                mouse_click)
+        CONTROL_BUTTON.showButton(control_bar.returnTitle())
+
+        if return_back:
+            control_bar.endCurrentScreen()
+            win = menuScreen.makeCurrentScreen()
+
+    # CHECKING IF THE EXIT BUTTON HAS BEEN CLICKED OR NOT
+    for event in py.event.get():
+
+        # IF CLICKED THEN CLOSE THE WINDOW
+        if (event.type == py.QUIT):
+            done = True
+
+    py.display.update()
+
+# CLOSE THE PROGRAM
+py.quit()
