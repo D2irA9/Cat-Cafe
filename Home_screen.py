@@ -149,6 +149,8 @@ def No_button(WHITE, BLACK, font):
 
     text_er_surf = None
     text_er_rect = None
+    text_er_em_surf = None  # Инициализация переменной
+    text_er_em_rect = None
 
     while True:
         for event in py.event.get():
@@ -184,7 +186,7 @@ def No_button(WHITE, BLACK, font):
                                     active_input = -1
                                     # Запускаем игру
                                     show_welcome_screen(current_player_name)
-                                    Game (current_player_id, current_player_email, current_player_name)
+                                    Game(current_player_id, current_player_email, current_player_name)
 
                                 except Exception as e:
                                     print(f"Ошибка при регистрации: {e}")
@@ -240,10 +242,7 @@ def No_button(WHITE, BLACK, font):
             new_screen.blit(label_surface, label_rect)
 
             # Отрисовка текстового поля
-            if i == active_input:
-                color = color_active
-            else:
-                color = color_inactive
+            color = color_active if i == active_input else color_inactive
             py.draw.rect(new_screen, color, box, 2)
             text_surface = font.render(input_texts[i], True, BLACK)
             new_screen.blit(text_surface, (box.x + 5, box.y + 5))
@@ -257,7 +256,7 @@ def No_button(WHITE, BLACK, font):
         # Отрисовка текста ошибки
         if text_er_surf:
             new_screen.blit(text_er_surf, text_er_rect)
-        if text_er_em_surf:
+        if text_er_em_surf:  # Убедитесь, что эта переменная инициализирована, если вы ее используете
             new_screen.blit(text_er_em_surf, text_er_em_rect)
 
         # Управление видимостью курсора

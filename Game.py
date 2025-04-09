@@ -15,6 +15,7 @@ import Home_screen
 py.init()
 font = py.font.Font("Font/PixelizerBold.ttf", 36)
 
+
 def exit_confirmation_screen():
     """Экран подтверждения выхода из игры"""
     exit_screen = py.display.set_mode((600, 900))
@@ -62,6 +63,7 @@ def exit_confirmation_screen():
         button_no.draw(exit_screen)
 
         py.display.flip()
+
 
 def Game(player_id, player_email, player_name):
     """Игра"""
@@ -199,9 +201,6 @@ def Game(player_id, player_email, player_name):
         market_screen = py.display.set_mode((640, 960))
         py.display.set_caption("Рынок")
 
-        # Инициализация переменной item_purchased
-        item_purchased = False
-
         # Загруска карты рынка
         market_map = load_pygame("Map/Market.tmx")
         market_tile_group = py.sprite.Group()
@@ -316,63 +315,6 @@ def Game(player_id, player_email, player_name):
                 py.display.flip()
                 clock.tick(60)
 
-        return item_purchased
-
-    def open_cafe_logic():
-        """Логика открытия кафе и взаимодействия с NPC"""
-        if not available_npcs:
-            return  # Если нет доступных NPC, выходим
-
-        npc_info = get_random_npc()  # Получаем случайного NPC
-        if npc_info is None:
-            return
-
-        # Путь NPC к кафе
-        npc_path = [(250, 1070), (250, 800)]  # Примерный путь к кафе
-        new_npc = NPC(npc_path[0], scale, npc_info["sprite"], npc_path)
-        all_sprites.add(new_npc)
-
-        # Выбор случайной еды и количества
-        food_type = get_random_food()
-        if food_type is None:
-            return
-
-        quantity = random.randint(1, 5)
-
-        # Создание "облака" с едой
-        food_cloud = py.Surface((100, 50), py.SRCALPHA)
-        food_cloud.fill((255, 255, 255, 200))  # Полупрозрачный белый
-        font = py.font.Font("Font/PixelizerBold.ttf", 20)
-        food_text = font.render(f"{food_type} x{quantity}", True, (0, 0, 0))
-        food_cloud.blit(food_text, (10, 10))
-
-        # Позиция облака над NPC
-        cloud_pos = (new_npc.rect.x - 10, new_npc.rect.y - 60)
-
-        # Движение NPC к кафе
-        npc_moving = True
-        npc_start_time = py.time.get_ticks()
-
-        while npc_moving:
-            now = py.time.get_ticks()
-            if now - npc_start_time > random.randint(3000, 5000):  # 3-5 секунд
-                npc_moving = False
-                all_sprites.remove(new_npc)  # Удаляем NPC после завершения пути
-
-            # Обновление позиции NPC
-            new_npc.update()  # Обновляем NPC
-            screen.fill(WHITE)  # Очистка экрана
-
-            # Отрисовка всех спрайтов
-            for sprite in all_sprites:
-                screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y))
-
-            # Отрисовка облака с едой
-            screen.blit(food_cloud, cloud_pos)
-
-            py.display.flip()
-            clock.tick(60)
-
     clock = py.time.Clock()
     item_purchased = False
     game_states = {
@@ -384,7 +326,7 @@ def Game(player_id, player_email, player_name):
         "start_button_show": False,
         "return_button_show": False,
         "open_button_show": False,
-        
+
         "camera_y": 0,
         "target_camera_y": 960,
         "target_camera_y_market": 1920,
@@ -417,7 +359,6 @@ def Game(player_id, player_email, player_name):
             game_states["camera_y"] -= 5
         return game_states["current_path_index"] >= len(path) and abs(camera_y - target_camera_y) < 5
 
-
     while True:
         player_balance = db.get_player_balance(player_id)
         current_time = py.time.get_ticks()
@@ -449,9 +390,10 @@ def Game(player_id, player_email, player_name):
                 elif game_states["start_button_show"] and not game_states["is_market_day"] and go_to_market.is_clicked(
                         event.pos):
                     item_purchased = show_market(player_id, player_email, player_balance, player_name)
-                # Вернуться
+                # Вернутся
                 elif game_states["return_button_show"] and return_button.is_clicked(event.pos):
                     game_states["is_returning"] = True
+                    # game_states["return_button_show"] = False
                     game_states["current_path_index"] = 0
                     game_states["target_camera_y"] = 960
 
@@ -464,8 +406,7 @@ def Game(player_id, player_email, player_name):
                 elif game_states["open_button_show"] and open_caff.is_clicked(event.pos):
                     game_states["is_open"] = True
                     print("Кафе открыто!")
-                    open_cafe_logic()
-                    game_states["open_button_show"] = False
+                    game_states["current_path_index"] = 0
 
                 if game_states["is_market_day"] or game_states["return_button_show"]:
                     for food in food_group:
@@ -481,13 +422,15 @@ def Game(player_id, player_email, player_name):
 
         # Начать рабочий день
         if game_states["is_working_day"]:
-            if handle_movement(player, game_states["player_path"], game_states["camera_y"], game_states["target_camera_y"]):
+            if handle_movement(player, game_states["player_path"], game_states["camera_y"],
+                               game_states["target_camera_y"]):
                 game_states["is_working_day"] = False
                 game_states["start_button_show"] = True
                 player.direction = "inaction"
         # Купить
         elif game_states["is_market_day"]:
-            if handle_movement(player, game_states["player_path_market"], game_states["camera_y"], game_states["target_camera_y_market"]):
+            if handle_movement(player, game_states["player_path_market"], game_states["camera_y"],
+                               game_states["target_camera_y_market"]):
                 game_states["is_market_day"] = False
                 game_states["return_button_show"] = True
                 player.direction = "inaction"
