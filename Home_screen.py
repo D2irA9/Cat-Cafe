@@ -18,6 +18,23 @@ def Home_screen():
     # Шрифт
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
 
+    # Подключение к БД
+    db = Database()
+    db.connect()
+
+    # Проверка существования игрока
+    global current_player_id, current_player_email, current_player_balance, current_player_name
+    current_player_email = "example@example.com"  # Замените на реальный email, если нужно
+    current_player_id = db.get_player_id(current_player_email)
+
+    if current_player_id is not None:
+        # Если игрок существует, показываем приветствие
+        current_player_name = db.get_player_name(current_player_id)  # Получаем имя игрока
+        current_player_balance = db.get_player_balance(current_player_id)  # Получаем баланс игрока
+        db.close()
+        show_welcome_screen(current_player_name)
+        return
+
     # Кнопки
     button_yes = Button("Да", 135, 360, 350, 100, WHITE, (30, 144, 255))
     button_no = Button("Нет", 135, 560, 350, 100, WHITE, (220, 20, 60))
