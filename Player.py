@@ -57,3 +57,8 @@ class Player(py.sprite.Sprite):
         elif direction == "right":
             self.rect.x += 5
             self.direction = "right"
+
+    def move_to(self, x, y):
+        """Перемещает игрока в заданную позицию"""
+        self.rect.centerx = x
+        self.rect.centery = y

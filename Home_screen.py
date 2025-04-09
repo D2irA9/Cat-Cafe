@@ -3,8 +3,9 @@ import sys
 import re
 from Button import Button
 from Sql import Database
-from Game import Game
+# from Game import Game
 import json
+from Test import Game
 
 
 # Подключение к БД

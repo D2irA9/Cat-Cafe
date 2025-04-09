@@ -1,211 +1,402 @@
 import pygame as py
+import sys
+import random
+from pytmx.util_pygame import load_pygame
+from Drawing import Tile
+from Button import Button
+from Player import Player
+from NPS import NPC
+from Food import Food
+from CoinDisplay import CoinDisplay
+from DayDisplay import DayDisplay
+from Sql import Database
+import Home_screen
 
+db = Database()
+db.connect()
 
-# SCREEN CLASS FOR WINDOW HAVING THE FUNCTION
-# OF UPDATING THE ONE SCREEN TO ANOTHER SCREEN
-
-
-class Screen():
-
-    # INITIALIZATION OF WINDOW HAVING TITLE,
-    # WIDTH, HEIGHT AND COLOUR
-    # HERE (0,0,255) IS A COLOUR CODE
-    def __init__(self, title, width=440, height=445,
-                 fill=(0, 0, 255)):
-        # HEIGHT OF A WINDOW
-        self.height = height
-        # TITLE OF A WINDOW
-        self.title = title
-        # WIDTH OF A WINDOW
-        self.width = width
-        # COLOUR CODE
-        self.fill = fill
-        # CURRENT STATE OF A SCREEN
-        self.CurrentState = False
-
-    # DISPLAY THE CURRENT SCREEN OF
-    # A WINDOW AT THE CURRENT STATE
-    def makeCurrentScreen(self):
-        # SET THE TITLE FOR THE CURRENT STATE OF A SCREEN
-        py.display.set_caption(self.title)
-        # SET THE STATE TO ACTIVE
-        self.CurrentState = True
-        # ACTIVE SCREEN SIZE
-        self.screen = py.display.set_mode((self.width,
-                                           self.height))
-
-    # THIS WILL SET THE STATE OF A CURRENT STATE TO OFF
-    def endCurrentScreen(self):
-        self.CurrentState = False
-
-    # THIS WILL CONFIRM WHETHER THE NAVIGATION OCCURS
-    def checkUpdate(self, fill):
-        # HERE FILL IS THE COLOR CODE
-        self.fill = fill
-        return self.CurrentState
-
-    # THIS WILL UPDATE THE SCREEN WITH
-    # THE NEW NAVIGATION TAB
-    def screenUpdate(self):
-        if self.CurrentState:
-            self.screen.fill(self.fill)
-
-    # RETURNS THE TITLE OF THE SCREEN
-    def returnTitle(self):
-        return self.screen
-
-
-# NAVIGATION BUTTON CLASS
-
-
-class Button():
-
-    # INITIALIZATION OF BUTTON
-    # COMPONENTS LIKE POSITION OF BUTTON,
-    # COLOR OF BUTTON, FONT COLOR OF BUTTON, FONT SIZE,
-    # TEXT INSIDE THE BUTTON
-    def __init__(self, x, y, sx, sy, bcolour,
-                 fbcolour, font, fcolour, text):
-        # ORIGIN_X COORDINATE OF BUTTON
-        self.x = x
-        # ORIGIN_Y COORDINATE OF BUTTON
-        self.y = y
-        # LAST_X COORDINATE OF BUTTON
-        self.sx = sx
-        # LAST_Y COORDINATE OF BUTTON
-        self.sy = sy
-        # FONT SIZE FOR THE TEXT IN A BUTTON
-        self.fontsize = 25
-        # BUTTON COLOUR
-        self.bcolour = bcolour
-        # RECTANGLE COLOR USED TO DRAW THE BUTTON
-        self.fbcolour = fbcolour
-        # BUTTON FONT COLOR
-        self.fcolour = fcolour
-        # TEXT IN A BUTTON
-        self.text = text
-        # CURRENT IS OFF
-        self.CurrentState = False
-        # FONT OBJECT FROM THE SYSTEM FONTS
-        self.buttonf = py.font.SysFont(font, self.fontsize)
-
-    # DRAW THE BUTTON FOR THE TWO
-    # TABS MENU_SCREEN AND CONTROL TABS MENU
-    def showButton(self, display):
-        if (self.CurrentState):
-            py.draw.rect(display, self.fbcolour,
-                         (self.x, self.y,
-                          self.sx, self.sy))
-        else:
-            py.draw.rect(display, self.fbcolour,
-                         (self.x, self.y,
-                          self.sx, self.sy))
-        # RENDER THE FONT OBJECT FROM THE SYSTEM FONTS
-        textsurface = self.buttonf.render(self.text,
-                                          False, self.fcolour)
-
-        # THIS LINE WILL DRAW THE SURF ONTO THE SCREEN
-        display.blit(textsurface,
-                     ((self.x + (self.sx / 2) -
-                       (self.fontsize / 2) * (len(self.text) / 2) -
-                       5, (self.y + (self.sy / 2) -
-                           (self.fontsize / 2) - 4))))
-
-    # THIS FUNCTION CAPTURE WHETHER
-    # ANY MOUSE EVENT OCCUR ON THE BUTTON
-    def focusCheck(self, mousepos, mouseclick):
-        if (mousepos[0] >= self.x and mousepos[0] <= self.x +
-                self.sx and mousepos[1] >= self.y and mousepos[1]
-                <= self.y + self.sy):
-            self.CurrentState = True
-            # IF MOUSE BUTTON CLICK THEN
-            # NAVIGATE TO THE NEXT OR PREVIOUS TABS
-            return mouseclick[0]
-
-        else:
-            # ELSE LET THE CURRENT STATE TO BE OFF
-            self.CurrentState = False
-            return False
-
-
-# INITIALIZATION OF THE PYGAME
 py.init()
-# INITIALIZATION OF SYSTEM FONTS
-py.font.init()
+clock = py.time.Clock()
+font = py.font.Font("Font/PixelizerBold.ttf", 36)
 
-# CREATING THE OBJECT OF THE
-# CLASS Screen FOR MENU SCREEN
-menuScreen = Screen("Menu Screen")
+purchased_items = []
+current_screen = "home"
 
-# CREATING THE OBJECT OF THE
-# CLASS Screen FOR CONTROL SCREEN
-control_bar = Screen("Control Screen")
+# Цвета
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+# vfinj,bhjdfybt
+TILE_SIZE = 16
+scale = 4
+# Меню
+menu_prices = db.get_menu_items()
+if not menu_prices:
+    menu_prices = {
+        "Pasta": 51, "Tacos": 17, "Ramen": 33, "Hamburg": 29,
+        "Pizza": 41, "Rolls": 31, "Soup": 19, "Fried_egg": 11,
+        "Water": 5, "Cocoa": 16, "Tea": 12, "Milkshake": 20,
+        "Coffee": 17, "Cocktail": 18, "Lemonade": 15, "Soda": 15,
+        "Cupcake": 19, "Cheesecake": 23, "Cake": 25, "Ice_cream": 25, "Pie": 30
+    }
+used_foods = []
+food_group = py.sprite.Group()
+inventory = {food_type: 0 for food_type in menu_prices}
 
-# CALLING OF THE FUNCTION TO
-# MAKE THE SCREEN FOR THE WINDOW
-win = menuScreen.makeCurrentScreen()
+def get_random_food():
+    """Получает случайную еду, которая еще не была использована"""
+    available_foods = [food for food in menu_prices.keys() if food not in used_foods]
+    if available_foods:
+        food = random.choice(available_foods)
+        used_foods.append(food)
+        return food
+    return None
 
-# MENU BUTTON
-MENU_BUTTON = Button(150, 150, 150, 50, (255, 250, 250),
-                     (255, 0, 0), "TimesNewRoman",
-                     (255, 255, 255), "Main Menu")
+def exit_confirmation_screen():
+    """Экран подтверждения выхода из игры"""
+    exit_screen = py.display.set_mode((600, 900))
+    py.display.set_caption("Подтверждение выхода")
 
-# CONTROL BUTTON
-CONTROL_BUTTON = Button(150, 150, 150, 50,
-                        (0, 0, 0), (0, 0, 255),
-                        "TimesNewRoman",
-                        (255, 255, 255), "Back")
+    # Кнопки
+    button_yes = Button("Да", 135, 360, 350, 100, BLACK, (220, 20, 60))
+    button_login_another = Button("Войти в другой аккаунт", 120, 480, 380, 100, BLACK, (152, 251, 152))
+    button_no = Button("Нет", 135, 600, 350, 100, BLACK, (30, 144, 255))
 
-done = False
+    while True:
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                py.quit()
+                sys.exit()
 
-toggle = False
+            if event.type == py.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = py.mouse.get_pos()
 
-# MAIN LOOPING
-while not done:
-    # CALLING OF screenUpdate
-    # function FOR MENU SCREEN
-    menuScreen.screenUpdate()
+                if button_yes.is_clicked(mouse_pos):
+                    py.quit()
+                    sys.exit()
 
-    # CALLING THE FUNCTION OF CONTROL BAR
-    control_bar.screenUpdate()
-    # STORING THE MOUSE EVENT TO
-    # CHECK THE POSITION OF THE MOUSE
-    mouse_pos = py.mouse.get_pos()
-    # CHECKING THE MOUSE CLICK EVENT
-    mouse_click = py.mouse.get_pressed()
-    # KEY PRESSED OR NOT
-    keys = py.key.get_pressed()
+                if button_login_another.is_clicked(mouse_pos):
+                    global all_sprites, tile_group, food_group
+                    all_sprites.empty()
+                    tile_group.empty()
+                    food_group.empty()
+                    Home_screen.Home_screen()
+                    return
 
-    # MENU BAR CODE TO ACCESS
-    # CHECKING MENU SCREEN FOR ITS UPDATE
-    if menuScreen.checkUpdate((25, 0, 255)):
-        control_barbutton = MENU_BUTTON.focusCheck(mouse_pos,
-                                                   mouse_click)
-        MENU_BUTTON.showButton(menuScreen.returnTitle())
+                if button_no.is_clicked(mouse_pos):
+                    return
 
-        if control_barbutton:
-            win = control_bar.makeCurrentScreen()
-            menuScreen.endCurrentScreen()
+        exit_screen.fill(BLACK)
 
-    # CONTROL BAR CODE TO ACCESS
-    # CHECKING CONTROL SCREEN FOR ITS UPDATE
-    elif control_bar.checkUpdate((255, 0, 255)):
-        return_back = CONTROL_BUTTON.focusCheck(mouse_pos,
-                                                mouse_click)
-        CONTROL_BUTTON.showButton(control_bar.returnTitle())
+        header_surface = font.render("Выйти из игры?", True, WHITE)
+        header_rect = header_surface.get_rect(center=(exit_screen.get_width() // 2, 50))
+        exit_screen.blit(header_surface, header_rect)
 
-        if return_back:
-            control_bar.endCurrentScreen()
-            win = menuScreen.makeCurrentScreen()
+        # Отрисовка кнопок
+        button_yes.draw(exit_screen)
+        button_login_another.draw(exit_screen)
+        button_no.draw(exit_screen)
 
-    # CHECKING IF THE EXIT BUTTON HAS BEEN CLICKED OR NOT
-    for event in py.event.get():
+        py.display.flip()
 
-        # IF CLICKED THEN CLOSE THE WINDOW
-        if (event.type == py.QUIT):
-            done = True
 
-    py.display.update()
+def show_market(player_id, player_email, player_balance, player_name):
+    global used_foods, purchased_items
+    used_foods = []
+    purchased_items = []
+    """Отображение рынка с эффектами плавного появления и затемнения"""
+    market_screen = py.display.set_mode((640, 960))
+    py.display.set_caption("Рынок")
 
-# CLOSE THE PROGRAM
-py.quit()
+    # Настройки эффектов
+    fade_surface = py.Surface((640, 960))
+    fade_surface.fill(BLACK)
+
+    # Эффект появления: начинаем с черного экрана
+    fade_alpha = 255
+    fade_in_speed = 3
+
+    # Эффект исчезновения (для перехода в кафе)
+    fading_out = False
+    fade_out_speed = 5
+
+    # Кнопка возврата
+    return_button = Button("В кафе", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
+
+    # Загрузка всех объектов рынка (как в вашем оригинальном коде)
+    market_map = load_pygame("Map/Market.tmx")
+    market_tile_group = py.sprite.Group()
+    all_sprites = py.sprite.Group()
+    coin_display = CoinDisplay()
+
+    # Загрузка дней
+    result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
+    player_day = result[0][0] if result and len(result) > 0 else 0
+    day_display = DayDisplay((500, 10), (120, 60), player_day)
+
+    # Загрузка тайлов карты
+    for layer in market_map.visible_layers:
+        if hasattr(layer, "data"):
+            for x, y, surf in layer.tiles():
+                pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
+                Tile(pos=pos, surf=surf, groups=market_tile_group, scale=scale)
+
+    # Создание NPC и еды (как в оригинале)
+    spawn_points = [(110, 140), (370, 140), (110, 400), (370, 400)]
+    food_group = py.sprite.Group()
+    used_npcs = []
+
+    trader_npcs = [
+        {"name": "Lyubava", "sprite": "Sprite/client/Lyubava.png"},
+        {"name": "Panteleimon", "sprite": "Sprite/client/Panteleimon.png"},
+        {"name": "Vasiliy", "sprite": "Sprite/client/Vasiliy.png"},
+        {"name": "Khariton", "sprite": "Sprite/client/Khariton.png"},
+        {"name": "Nona", "sprite": "Sprite/client/Nona.png"},
+        {"name": "Yevsey", "sprite": "Sprite/client/Yevsey.png"},
+    ]
+    random.shuffle(trader_npcs)
+    for i, pos in enumerate(spawn_points):
+        food_type = get_random_food()
+        if food_type is None:
+            continue
+
+        quantity = random.randint(1, 5)
+        price = menu_prices[food_type]
+
+        # Создаем еду
+        new_food = Food((pos[0] + 45, pos[1] + 150), food_type, scale=3, quantity=quantity, price=price)
+        food_group.add(new_food)
+
+        # Берем NPC по порядку из перемешанного списка
+        if i < len(trader_npcs):
+            npc_info = trader_npcs[i]
+        else:
+            # Если NPC меньше чем точек спавна, берем случайного
+            npc_info = random.choice(trader_npcs)
+
+        # Создаем NPC
+        new_npc = NPC((pos[0], pos[1]), scale, npc_info["sprite"], [(pos[0], pos[1])])
+        new_npc.is_market_npc = True
+        all_sprites.add(new_npc)
+
+    # Основной цикл
+    running = True
+    while running:
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                py.quit()
+                sys.exit()
+
+            if event.type == py.MOUSEBUTTONDOWN:
+                if return_button.is_clicked(event.pos) and not fading_out and fade_alpha <= 0:
+                    fading_out = True
+
+                # Обработка покупок (только когда видно экран)
+                if fade_alpha <= 0 and not fading_out:
+                    for food in food_group:
+                        if food.is_clicked(event.pos) and player_balance >= food.price:
+                            player_balance -= food.price
+                            inventory[food.type] += 1
+                            food.decrease_quantity()
+                            food.update_ui()
+                            purchased_items.append({
+                                "name": food.type,
+                                "price": food.price,
+                                "time": py.time.get_ticks()
+                            })
+                            if db.check_player_exists(player_id):
+                                db.update_balance(player_id, player_balance)
+
+        # Логика эффектов
+        if not fading_out:
+            if fade_alpha > 0:
+                fade_alpha = max(0, fade_alpha - fade_in_speed)
+        else:
+            fade_alpha = min(255, fade_alpha + fade_out_speed)
+            if fade_alpha == 255:
+                if db.check_player_exists(player_id):
+                    db.update_balance(player_id, player_balance)
+                py.display.quit()
+                open_cafe_win(player_id, player_email, player_balance, player_name)
+
+                # running = False
+                return
+
+        # Отрисовка
+        market_screen.fill(WHITE)
+
+        # Отрисовка объектов рынка
+        market_tile_group.draw(market_screen)
+        for npc in all_sprites:
+            if isinstance(npc, NPC):
+                market_screen.blit(npc.image, npc.rect.topleft)
+
+        food_group.update()
+        for food in food_group:
+            food.draw(market_screen, 0)
+
+        return_button.draw(market_screen)
+        coin_display.draw(market_screen, player_balance)
+        day_display.draw(market_screen)
+
+        # Наложение эффектов
+        if fade_alpha > 0:
+            fade_surface.set_alpha(fade_alpha)
+            market_screen.blit(fade_surface, (0, 0))
+
+        py.display.flip()
+        clock.tick(60)
+
+
+def open_cafe_win(player_id, player_email, player_balance, player_name):
+    """Функция для открытия кафе после пути на работу"""
+    cafe_screen = py.display.set_mode((640, 960))
+    py.display.set_caption("Cat Cafe")
+
+    # Загрузка карты кафе
+    cafe_map = load_pygame("Map/cat-cafe.tmx")
+    cafe_tile_group = py.sprite.Group()
+
+    # Загрузка тайлов
+    for layer in cafe_map.visible_layers:
+        if hasattr(layer, "data"):
+            for x, y, surf in layer.tiles():
+                pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
+                Tile(pos=pos, surf=surf, groups=cafe_tile_group, scale=scale)
+
+    running = True
+    while running:
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                running = False
+
+        cafe_screen.fill(WHITE)
+        cafe_tile_group.draw(cafe_screen)
+        py.display.flip()
+        clock.tick(60)
+
+    py.quit()
+    sys.exit()
+
+
+def Game(player_id, player_email, player_name):
+    screen = py.display.set_mode((640, 960))
+    py.display.set_caption("Дом")
+
+    global all_sprites, tile_group, food_group
+    all_sprites = py.sprite.Group()
+    tile_group = py.sprite.Group()
+    food_group = py.sprite.Group()
+
+    # Загрузка карты
+    game_map = load_pygame("Map/home.tmx")
+
+    # Вытаскивание всех слоёв карты
+    for layer in game_map.visible_layers:
+        if hasattr(layer, "data"):
+            for x, y, surf in layer.tiles():
+                pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
+                Tile(pos=pos, surf=surf, groups=tile_group, scale=scale)
+
+    # Монеты и дни
+    coin_display = CoinDisplay()
+    result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
+    player_day = result[0][0] if result and len(result) > 0 else 0
+    day_display = DayDisplay((500, 10), (120, 60), player_day)
+
+    # Кнопка
+    buy_button = Button("Купить", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+
+    # Игрок
+    player = Player((130, 310), scale=4)
+    all_sprites.add(player)
+
+    # Переменные для движения и затемнения
+    path = [(65, 310), (65, 600), (30, 600), (30, 940), (320, 940), (320, 1070), (250, 1070)]
+    current_target = 0
+    is_moving = False
+    fade_alpha = 0
+    fade_surface = py.Surface((640, 960))
+    fade_surface.fill(BLACK)
+    market_opened = False
+
+    while True:
+        player_balance = db.get_player_balance(player_id)
+
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                db.close()
+                py.quit()
+                sys.exit()
+
+            if event.type == py.KEYDOWN:
+                if event.key == py.K_ESCAPE:
+                    exit_confirmation_screen()
+
+            if event.type == py.MOUSEBUTTONDOWN:
+                if not is_moving and buy_button.is_clicked(event.pos):
+                    is_moving = True  # Начинаем движение при нажатии на "Купить"
+
+        # Логика движения игрока
+        if is_moving and not market_opened:
+            if current_target < len(path):
+                target_x, target_y = path[current_target]
+
+                # Движение по X
+                if player.rect.x < target_x:
+                    player.move("right")
+                elif player.rect.x > target_x:
+                    player.move("left")
+
+                # Движение по Y
+                if player.rect.y < target_y:
+                    player.move("down")
+                elif player.rect.y > target_y:
+                    player.move("up")
+
+                # Проверка достижения точки
+                if (abs(player.rect.x - target_x) < 5 and abs(player.rect.y - target_y) < 5):
+                    current_target += 1
+
+                # Постепенное затемнение (начинаем после 3-й точки)
+                if current_target >= 3 and fade_alpha < 255:
+                    fade_alpha += 3
+                    fade_surface.set_alpha(fade_alpha)
+            else:
+                market_opened = True
+                py.display.quit()
+                show_market(player_id, player_email, player_balance, player_name)
+                # Сброс состояния после закрытия магазина
+                is_moving = False
+                market_opened = False
+                current_target = 0
+                fade_alpha = 0
+                player.rect.x, player.rect.y = 130, 310
+                return
+
+        # Отрисовка
+        all_sprites.update()
+        screen.fill(WHITE)
+
+        # Отрисовка всех спрайтов
+        for sprite in all_sprites:
+            screen.blit(sprite.image, sprite.rect.topleft)
+
+        # Отрисовка карты
+        for tile in tile_group:
+            screen.blit(tile.image, (tile.rect.x, tile.rect.y - 0))
+        for sprite in all_sprites:
+            screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y - 0))
+
+        buy_button.draw(screen)
+
+        # Монеты и дни
+        coin_display.update()
+        coin_display.draw(screen, player_balance)
+        day_display.draw(screen)
+
+        # Затемнение экрана
+        if fade_alpha > 0:
+            screen.blit(fade_surface, (0, 0))
+
+        py.display.flip()
+        clock.tick(60)
