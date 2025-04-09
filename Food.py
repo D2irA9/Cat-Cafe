@@ -90,14 +90,13 @@ class Food(py.sprite.Sprite):
 
     def update_ui(self):
         """Обновляет элементы интерфейса"""
-
         # Ценник
         self.price_text = self.font.render(str(self.price), True, (255, 255, 0))
-        self.price_rect = self.price_text.get_rect(center=(25, 14))
+        self.price_rect = self.price_text.get_rect(center=(self.rect.centerx, self.rect.bottom - 5))
 
         # Количество
-        self.quantity_text = self.font.render(str(self.quantity), True, (255, 255, 255))
-        self.quantity_rect = self.quantity_text.get_rect(center=(20, 14))
+        self.quantity_text = self.font.render(f"x{self.quantity}", True, (255, 255, 255))
+        self.quantity_rect = self.quantity_text.get_rect(center=(self.rect.centerx, self.rect.top - 5))
 
     def update_quantity_surface(self):
         """Обновляет поверхность с количеством"""
@@ -116,15 +115,14 @@ class Food(py.sprite.Sprite):
         # Позиция ценника
         price_bg_pos = (self.rect.centerx - 35, pos_y + self.rect.height - 5)
         surface.blit(self.price_bg, price_bg_pos)
-        surface.blit(self.price_text, (price_bg_pos[0] + self.price_rect.x,
-                                       price_bg_pos[1] + self.price_rect.y))
+        surface.blit(self.price_text, (price_bg_pos[0] + 10, price_bg_pos[1] + 5))  # Центрируем текст
         surface.blit(self.coin_icon, (price_bg_pos[0] + 40, price_bg_pos[1] + 2))
 
         # Позиция количества
         quantity_bg_pos = (self.rect.centerx - 20, pos_y - 25)
         surface.blit(self.quantity_bg, quantity_bg_pos)
-        surface.blit(self.quantity_text, (quantity_bg_pos[0] + self.quantity_rect.x,
-                                          quantity_bg_pos[1] + self.quantity_rect.y))
+        surface.blit(self.quantity_text, (quantity_bg_pos[0] + 10, quantity_bg_pos[1] + 5))
+
     def decrease_quantity(self):
         """Уменьшает количество на 1 и обновляет отображение"""
         self.quantity -= 1

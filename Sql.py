@@ -1,5 +1,4 @@
 import pymysql
-import hashlib
 import bcrypt
 
 class Database:
@@ -139,6 +138,12 @@ class Database:
         """Шифрует пароль"""
         return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+    def check_player_exists(self, player_id):
+        """Проверяет, существует ли игрок с данным ID"""
+        query = "SELECT player.id FROM `player` WHERE `id` = %s"
+        result = self.execute_query(query, (player_id,))
+        return result is not None and len(result) > 0
+
     def add_player(self, name, email, password, balance=100, day=1):
         """Добавление игрока"""
 
@@ -177,9 +182,19 @@ class Database:
         return result[0][0] if result else None
 
     def update_balance(self, player_id, new_balance):
-        """Обновляет баланс игрока"""
+        """Обновляет баланс игрока в базе данных"""
+        if not self.check_player_exists(player_id):
+            print(f"Игрок с ID {player_id} не найден.")
+            return
+
         query = "UPDATE player SET balance = %s WHERE id = %s"
-        self.execute_query(query, (new_balance, player_id))
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(query, (new_balance, player_id))
+                self.connection.commit()
+                print(f"Баланс игрока с ID {player_id} обновлен на {new_balance}.")
+        except Exception as e:
+            print(f"Ошибка при обновлении баланса: {e}")
 
     def get_menu_items(self):
         """Получает список всех блюд и их цен из базы данных."""
