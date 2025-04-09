@@ -97,6 +97,7 @@ def Game(player_id, player_email, player_balance, player_name):
     result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
     player_day = result[0][0] if result and len(result) > 0 else 0
     day_display = DayDisplay((500, 10), (120, 60), player_day)
+    player_balance = db.get_player_balance(player_id)
 
     # Кнопки
     start = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))

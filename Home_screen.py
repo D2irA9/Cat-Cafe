@@ -4,6 +4,12 @@ import re
 from Button import Button
 from Sql import Database
 from Game import Game
+import json
+
+
+# Подключение к БД
+db = Database()
+db.connect()
 
 def is_valid_email(email):
     """Проверки почты"""
@@ -13,9 +19,10 @@ def is_valid_email(email):
     else:
         return False
 
-
-def Home_screen(WHITE, BLACK):
+def Home_screen():
     """Начальный экран"""
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
 
     py.init()
     screen = py.display.set_mode((640, 960))
@@ -24,22 +31,32 @@ def Home_screen(WHITE, BLACK):
     # Шрифт
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
 
-    # Подключение к БД
-    db = Database()
-    db.connect()
-
-    # Проверка существования игрока
-    global current_player_id, current_player_email, current_player_balance, current_player_name
-    current_player_email = "example@example.com"  # Замените на реальный email, если нужно
-    current_player_id = db.get_player_id(current_player_email)
-
-    if current_player_id is not None:
-        # Если игрок существует, показываем приветствие
-        current_player_name = db.get_player_name(current_player_id)  # Получаем имя игрока
-        current_player_balance = db.get_player_balance(current_player_id)  # Получаем баланс игрока
-        db.close()
-        show_welcome_screen(current_player_name)
-        return
+    # Проверка существования файла с данными игрока
+    # try:
+    #     with open("player_data.json", "r") as file:
+    #         # Проверяем, что файл не пустой
+    #         if file.readable():
+    #             file.seek(0)  # Возвращаемся в начало файла
+    #             player_data = json.load(file)
+    #             current_player_id = player_data["id"]
+    #             current_player_email = player_data["email"]
+    #             current_player_balance = player_data["balance"]
+    #             current_player_name = player_data["name"]
+    #
+    #             # Если игрок существует, показываем приветствие
+    #             show_welcome_screen(current_player_name)
+    #             return
+    #         else:
+    #             print("Файл player_data.json пуст.")
+    # except FileNotFoundError:
+    #     print("Файл player_data.json не найден. Создайте новый аккаунт.")
+    # except json.JSONDecodeError:
+    #     print("Ошибка чтения файла player_data.json. Проверьте формат файла.")
+    #     # Удаляем поврежденный файл, чтобы создать новый
+    #     import os
+    #     if os.path.exists("player_data.json"):
+    #         os.remove("player_data.json")
+    #     print("Поврежденный файл удален. Попробуйте снова.")
 
     # Кнопки
     button_yes = Button("Да", 135, 360, 350, 100, WHITE, (30, 144, 255))
@@ -116,12 +133,9 @@ def No_button(WHITE, BLACK, font):
 
     # Ввод текста
     input_boxes = [
-        # Email
-        py.Rect(75, 300, 450, 70),
-        # Пароль
-        py.Rect(75, 450, 450, 70),
-        # Имя
-        py.Rect(75, 600, 450, 70)
+        py.Rect(75, 300, 450, 70),      # Email
+        py.Rect(75, 450, 450, 70),      # Пароль
+        py.Rect(75, 600, 450, 70)       # Имя
     ]
     input_texts = ['', '', '']
     active_input = -1
@@ -139,11 +153,13 @@ def No_button(WHITE, BLACK, font):
     while True:
         for event in py.event.get():
             if event.type == py.QUIT:
+                db.close()
                 py.quit()
                 sys.exit()
 
             if event.type == py.KEYDOWN:
                 if event.key == py.K_ESCAPE:
+                    db.close()
                     return Home_screen()
 
                 if active_input != -1:
@@ -152,10 +168,6 @@ def No_button(WHITE, BLACK, font):
                             current_player_name = input_texts[2]
                             current_player_email = input_texts[0]
                             current_player_balance = 100
-
-                            # Подключение к БД
-                            db = Database()
-                            db.connect()
 
                             # Проверка на существование email
                             if db.get_player_id(current_player_email) is not None:
@@ -166,7 +178,7 @@ def No_button(WHITE, BLACK, font):
                                     db.add_player(current_player_name, current_player_email, input_texts[1], current_player_balance)
                                     # Получаем ID нового игрока
                                     current_player_id = db.get_player_id(current_player_email)
-                                    db.close()
+
                                     # Сбрасываем поля ввода
                                     input_texts = ['', '', '']
                                     active_input = -1
@@ -267,17 +279,14 @@ def Yes_button(WHITE, BLACK, font):
 
     # Переменные для ввода текста
     input_boxes = [
-        # Email
-        py.Rect(75, 300, 450, 70),
-        # Пароль
-        py.Rect(75, 450, 450, 70),
+        py.Rect(75, 300, 450, 70),  # Email
+        py.Rect(75, 450, 450, 70),  # Пароль
     ]
     input_texts = ['', '']
     active_input = -1
     color_inactive = py.Color('lightskyblue3')
     color_active = py.Color('dodgerblue2')
 
-    # Позиция курсора
     cursor_position = 0
     cursor_visible = True
     cursor_timer = 0
@@ -300,8 +309,7 @@ def Yes_button(WHITE, BLACK, font):
                         if all(input_texts):
                             email = input_texts[0]
                             password = input_texts[1]
-                            db = Database()
-                            db.connect()
+
                             if db.check_user(email, password):
                                 # Получаем все данные игрока
                                 query = "SELECT id, name, balance FROM player WHERE email = %s"
@@ -315,8 +323,7 @@ def Yes_button(WHITE, BLACK, font):
                                     db.close()
 
                                     # Запуск игры
-                                    Game(current_player_id, current_player_email, current_player_balance,
-                                         current_player_name)
+                                    Game(current_player_id, current_player_email, current_player_balance, current_player_name)
                                 else:
                                     text_er_surf = font.render("Ошибка получения данных", True, (220, 20, 60))
                                     text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
@@ -324,6 +331,7 @@ def Yes_button(WHITE, BLACK, font):
                                 text_er_surf = font.render("Неверный email или пароль", True, (220, 20, 60))
                                 text_er_rect = text_er_surf.get_rect(center=(new_screen.get_width() // 2, 750))
 
+                    # Обработка других клавиш для ввода текста
                     elif event.key == py.K_BACKSPACE:
                         if cursor_position > 0:
                             input_texts[active_input] = (input_texts[active_input][:cursor_position - 1] +
