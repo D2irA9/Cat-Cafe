@@ -199,6 +199,9 @@ def Game(player_id, player_email, player_name):
         market_screen = py.display.set_mode((640, 960))
         py.display.set_caption("Рынок")
 
+        # Инициализация переменной item_purchased
+        item_purchased = False
+
         # Загруска карты рынка
         market_map = load_pygame("Map/Market.tmx")
         market_tile_group = py.sprite.Group()
@@ -312,6 +315,8 @@ def Game(player_id, player_email, player_name):
 
                 py.display.flip()
                 clock.tick(60)
+
+        return item_purchased
 
     def open_cafe_logic():
         """Логика открытия кафе и взаимодействия с NPC"""
