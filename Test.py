@@ -471,9 +471,10 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                     exit_confirmation_screen()
 
             if event.type == py.MOUSEBUTTONDOWN and show_open_button and not day_completed:
-                if (open_button.is_clicked(event.pos) if len(purchased_items) > 0 else end_day_button.is_clicked(event.pos)):
+                if (open_button.is_clicked(event.pos) if len(purchased_items) > 0 else end_day_button.is_clicked(
+                        event.pos)):
                     if len(purchased_items) > 0:
-                        show_open_button = False
+                        show_open_button = False  # Убираем кнопку сразу после нажатия
                         current_npc, npc_path_used = spawn_npc()
                         game_state = GameState.NPC_MOVING
                     else:
@@ -618,13 +619,13 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
 
                 game_state = GameState.NPC_LEAVING
 
+
         elif game_state == GameState.NPC_LEAVING:
-            current_npc.update()  # Обновляем NPC для движения по пути
+            current_npc.update()
             if current_npc.path_completed:
                 current_npc.kill()
                 game_state = GameState.WAITING
-                show_open_button = True
-                show_open_button = len(purchased_items) > 0
+                # Показываем кнопку только если есть еще еда
                 current_npc = None
 
         elif game_state == GameState.DAY_END:
@@ -637,15 +638,12 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 break
 
         elif game_state == GameState.SERVING:
-            # Процесс обслуживания (2 секунды)
             if current_time - serving_timer > 2000:
-                # Завершаем обслуживание
                 if hasattr(current_npc, 'food_indicator'):
                     current_npc.food_indicator.kill()
                 current_npc.kill()
                 game_state = GameState.WAITING
                 current_npc = None
-                show_open_button = True
 
         # Обновление объектов
         all_sprites.update()
@@ -669,7 +667,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 open_button.draw(cafe_screen)
             else:
                 end_day_button.draw(cafe_screen)
-                
+
         coin_display.draw(cafe_screen, player_balance)
         day_display.draw(cafe_screen)
 
