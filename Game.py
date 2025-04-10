@@ -333,7 +333,7 @@ def Game(player_id, player_email, player_name):
         "current_path_index": 0,
     }
 
-    def handle_movement(player, path, camera_y, target_camera_y):
+    def handle_movement(player, path):
         """Обработка движения игрока и камеры"""
         if game_states["current_path_index"] < len(path):
             target_x, target_y = path[game_states["current_path_index"]]
@@ -348,12 +348,7 @@ def Game(player_id, player_email, player_name):
             else:
                 game_states["current_path_index"] += 1
 
-        # Обновление позиции камеры
-        if camera_y < target_camera_y:
-            game_states["camera_y"] += 5
-        if camera_y > target_camera_y:
-            game_states["camera_y"] -= 5
-        return game_states["current_path_index"] >= len(path) and abs(camera_y - target_camera_y) < 5
+        return game_states["current_path_index"]
 
     def open_cafe_logic():
         """Логика открытия кафе и появления NPC"""

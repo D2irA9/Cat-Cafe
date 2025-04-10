@@ -249,19 +249,20 @@ def show_market(player_id, player_email, player_balance, player_name):
 
 
 def open_cafe_win(player_id, player_email, player_balance, player_name):
-    """Функция для открытия кафе с эффектом плавного появления"""
+    """Функция для открытия кафе с NPC клиентами"""
     cafe_screen = py.display.set_mode((640, 960))
     py.display.set_caption("Cat Cafe")
 
     # Настройки эффекта плавного появления
     fade_surface = py.Surface((640, 960))
     fade_surface.fill(BLACK)
-    fade_alpha = 255  # Начинаем с полностью черного экрана
-    fade_speed = 3  # Скорость появления
+    fade_alpha = 255
+    fade_speed = 3
 
     # Инициализация групп спрайтов
     all_sprites = py.sprite.Group()
     cafe_tile_group = py.sprite.Group()
+    npc_group = py.sprite.Group()  # Отдельная группа для NPC
 
     # Загрузка карты кафе
     cafe_map = load_pygame("Map/cat-cafe.tmx")
@@ -273,19 +274,73 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
                 Tile(pos=pos, surf=surf, groups=cafe_tile_group, scale=scale)
 
-    # Игрок (изменил координаты на (320, 480) - центр экрана)
-    player = Player((320, 480), scale=4)
+    # Игрок
+    player = Player((60, 180), scale=4)
     all_sprites.add(player)
 
-    # Интерфейс
+    # Путь для игрока
+    path_cafe = [
+        [(30, -30), (30, 60), (320, 60), (320, 130), (250, 230)],
+    ]
+    current_target = 0
+
+    def handle_movement(player, path):
+        """Обработка движения игрока"""
+        global current_target
+        if current_target < len(path):
+            target_x, target_y = path[current_target]
+            # Движение по X
+            if player.rect.x < target_x:
+                player.move("right")
+            elif player.rect.x > target_x:
+                player.move("left")
+
+            # Движение по Y
+            if player.rect.y < target_y:
+                player.move("down")
+            elif player.rect.y > target_y:
+                player.move("up")
+
+            # Проверка достижения точки
+            if (abs(player.rect.x - target_x) < 5 and abs(player.rect.y - target_y) < 5):
+                current_target += 1
+
+        return current_target
+
+        # Интерфейс
     coin_display = CoinDisplay()
     result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
     player_day = result[0][0] if result and len(result) > 0 else 0
     day_display = DayDisplay((500, 10), (120, 60), player_day)
-    open_button = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+    open_button = Button("Открыть кафе", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+    show_open_button = True
+
+    # Настройки NPC
+    npc_data = [
+        {"name": "Lyubava", "sprite": "Sprite/client/Lyubava.png"},
+        {"name": "Panteleimon", "sprite": "Sprite/client/Panteleimon.png"},
+        {"name": "Vasiliy", "sprite": "Sprite/client/Vasiliy.png"},
+        {"name": "Khariton", "sprite": "Sprite/client/Khariton.png"},
+        {"name": "Nona", "sprite": "Sprite/client/Nona.png"},
+        {"name": "Yevsey", "sprite": "Sprite/client/Yevsey.png"},
+    ]
+
+    # Пути для NPC (примерные координаты)
+    npc_paths = [
+        # [(-50, 800), (50, 800), (50, 400), (175, 400), ],  # Путь 1
+        [(-40, 800), (40, 800), (40, 350), (350, 350), (350, 400), ],  # Путь 2
+        # [(-50, 500), (200, 500), (200, 400)],  # Путь 3
+        # [(700, 500), (450, 500), (450, 400)]  # Путь 4
+    ]
+
+    # Таймеры для NPC
+    npc_spawn_timer = 0
+    npc_spawn_delay = 0
+    spawning_npc = False
 
     # Основной цикл
     while True:
+        current_time = py.time.get_ticks()
         player_balance = db.get_player_balance(player_id)
 
         # Обработка событий
@@ -299,8 +354,31 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 if event.key == py.K_ESCAPE:
                     exit_confirmation_screen()
 
+            if event.type == py.MOUSEBUTTONDOWN and show_open_button:
+                if open_button.is_clicked(event.pos):
+                    show_open_button = False
+                    # Устанавливаем случайную задержку для появления NPC (2-4 секунды)
+                    npc_spawn_delay = random.randint(2000, 4000)
+                    npc_spawn_timer = current_time
+                    spawning_npc = True
+
+        # Логика появления NPC
+        if spawning_npc and current_time - npc_spawn_timer > npc_spawn_delay:
+            # Выбираем случайного NPC и путь
+            npc_info = random.choice(npc_data)
+            path = random.choice(npc_paths)
+
+            # Создаем NPC
+            new_npc = NPC(path[0], scale, npc_info["sprite"], path)
+            npc_group.add(new_npc)
+
+            # Сбрасываем таймер для следующего NPC
+            spawning_npc = False
+            show_open_button = False  # Кнопка остается скрытой
+
         # Обновление
         all_sprites.update()
+        npc_group.update()  # Обновляем NPC отдельно
 
         # Постепенное уменьшение затемнения
         if fade_alpha > 0:
@@ -310,18 +388,20 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         # Отрисовка
         cafe_screen.fill(WHITE)
 
-        # Отрисовка карты
+        # 1. Отрисовка карты
         cafe_tile_group.draw(cafe_screen)
 
-        # Отрисовка игрока и других спрайтов
+        # 2. Отрисовка игрока и NPC
         all_sprites.draw(cafe_screen)
+        npc_group.draw(cafe_screen)
 
-        # Отрисовка интерфейса
-        open_button.draw(cafe_screen)
+        # 3. Отрисовка интерфейса
+        if show_open_button:
+            open_button.draw(cafe_screen)
         coin_display.draw(cafe_screen, player_balance)
         day_display.draw(cafe_screen)
 
-        # Наложение эффекта затемнения
+        # 4. Наложение эффекта затемнения
         if fade_alpha > 0:
             cafe_screen.blit(fade_surface, (0, 0))
 
