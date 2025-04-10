@@ -32,7 +32,7 @@ class Database:
             with self.connection.cursor() as cursor:
                 cursor.execute(query, params)
                 self.connection.commit()
-                return cursor.fetchall()  # Возвращаем все результаты запроса
+                return cursor.fetchall()
 
         except pymysql.MySQLError as e:
             print(f"Ошибка '{e}' при выполнении запроса: {query}")
@@ -172,8 +172,17 @@ class Database:
         result = self.execute_query(query, (email,))
 
         if result and len(result) > 0:
-            return result[0][0]  # Возвращаем ID игрока
-        return None  # Если игрок не найден, возвращаем None
+            return result[0][0]
+        return None
+
+    def get_client_id(self, client_name):
+        """Получает ID клиента (NPC) по его имени"""
+        query = "SELECT id FROM client WHERE name = %s"
+        result = self.execute_query(query, (client_name,))
+
+        if result and len(result) > 0:
+            return result[0][0]
+        return None
 
     def get_player_balance(self, player_id):
         """Получает баланс игрока по ID"""
@@ -198,11 +207,17 @@ class Database:
 
     def get_menu_items(self):
         """Получает список всех блюд и их цен из базы данных."""
-        query = "SELECT name, price FROM menu"
+        query = "SELECT id, name, price FROM menu"
         result = self.execute_query(query)
         if result:
-            return {item[0]: item[1] for item in result}
+            return [{"id": item[0], "name": item[1], "price": item[2]} for item in result]
         return None
+
+    def get_dish_name(self, dish_id):
+        """Получает название блюда по ID"""
+        query = "SELECT name FROM menu WHERE id = %s"
+        result = self.execute_query(query, (dish_id,))
+        return result[0][0] if result else None
 
     def close(self):
         """Закрывает соединение с базой данных"""

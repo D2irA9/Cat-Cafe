@@ -101,3 +101,7 @@ class CoinDisplay:
         text_x = coin_x + self.display_size + 10
         text_y = coin_y + (self.display_size - balance_text.get_height()) // 2
         screen.blit(balance_text, (text_x, text_y))
+
+    def get_coin_sprite(self):
+        """Возвращает спрайт монеты для отображения"""
+        return self.image

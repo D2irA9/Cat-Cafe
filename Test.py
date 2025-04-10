@@ -28,9 +28,9 @@ BLACK = (0, 0, 0)
 # vfinj,bhjdfybt
 TILE_SIZE = 16
 scale = 4
-# Меню
-menu_prices = db.get_menu_items()
-if not menu_prices:
+# Стало:
+menu_items = db.get_menu_items()
+if not menu_items:
     menu_prices = {
         "Pasta": 51, "Tacos": 17, "Ramen": 33, "Hamburg": 29,
         "Pizza": 41, "Rolls": 31, "Soup": 19, "Fried_egg": 11,
@@ -38,9 +38,14 @@ if not menu_prices:
         "Coffee": 17, "Cocktail": 18, "Lemonade": 15, "Soda": 15,
         "Cupcake": 19, "Cheesecake": 23, "Cake": 25, "Ice_cream": 25, "Pie": 30
     }
+else:
+    # Преобразуем список словарей в простой словарь {name: price}
+    menu_prices = {item['name']: item['price'] for item in menu_items}
+
+# Затем создаем инвентарь
+inventory = {food_type: 0 for food_type in menu_prices}
 used_foods = []
 food_group = py.sprite.Group()
-inventory = {food_type: 0 for food_type in menu_prices}
 
 def get_random_food():
     """Получает случайную еду, которая еще не была использована"""
@@ -322,6 +327,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         WAIT_BEFORE_DISAPPEAR = 6  # Новое состояние для ожидания перед исчезновением
         FOOD_DISAPPEARING = 7
         NPC_LEAVING = 8
+        DAY_END = 9
 
     game_state = GameState.WAITING
     current_npc = None
@@ -338,7 +344,9 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
     result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
     player_day = result[0][0] if result and len(result) > 0 else 0
     day_display = DayDisplay((500, 10), (120, 60), player_day)
+
     open_button = Button("Открыть кафе", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+    end_day_button = Button("Закончить рабочий день", 135, 760, 350, 100, (0, 0, 0), (220, 20, 60))
     show_open_button = True
 
     # Настройки NPC
@@ -350,6 +358,9 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         {"name": "Nona", "sprite": "Sprite/client/Nona.png"},
         {"name": "Yevsey", "sprite": "Sprite/client/Yevsey.png"},
     ]
+
+    available_npcs = npc_data.copy()
+
     # Пути для NPC
     npc_paths_cafe = [
         [(-50, 810), (50, 810), (50, 400), (175, 400)],  # Путь 1
@@ -357,6 +368,75 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         [(175, 400), (175, 350), (500, 350), (500, 810), (690, 810)], # Для 1 пути
         [(350, 400), (350, 350), (500, 350), (500, 810), (690, 810)], # Для 2 пути
     ]
+
+    day_earnings = 0
+    customers_served = 0
+    day_completed = False
+
+    def spawn_npc():
+        """Спавнит нового NPC из доступных"""
+        nonlocal available_npcs, current_npc
+
+        if not available_npcs:
+            # Все NPC использованы - сбрасываем список
+            available_npcs = npc_data.copy()
+
+        # Выбираем случайного NPC из доступных
+        npc_info = random.choice(available_npcs)
+        available_npcs.remove(npc_info)  # Удаляем из доступных
+
+        path = random.choice(npc_paths_cafe[:2])  # Выбираем только пути прихода (0 или 1)
+        new_npc = NPC(path[0], scale, npc_info["sprite"], path)
+        npc_group.add(new_npc)
+        return new_npc, path
+
+    def end_day_screen():
+        """Отображает экран с итогами дня"""
+        nonlocal fade_alpha
+
+        # Затемнение экрана
+        fade_surface.fill(BLACK)
+        fade_surface.set_alpha(fade_alpha)
+        cafe_screen.blit(fade_surface, (0, 0))
+
+        # Если экран полностью затемнен - показываем итоги
+        if fade_alpha == 255:
+            # Фон для итогов
+            result_bg = py.Surface((400, 300))
+            result_bg.fill((50, 50, 50))
+            result_bg_rect = result_bg.get_rect(center=(cafe_screen.get_width() // 2, cafe_screen.get_height() // 2))
+            cafe_screen.blit(result_bg, result_bg_rect)
+
+            # Текст итогов
+            title = font.render("Итоги рабочего дня:", True, WHITE)
+            cafe_screen.blit(title, (result_bg_rect.x + 50, result_bg_rect.y + 30))
+
+            customers_text = font.render(f"Обслужено клиентов: {customers_served}", True, WHITE)
+            cafe_screen.blit(customers_text, (result_bg_rect.x + 50, result_bg_rect.y + 100))
+
+            earnings_text = font.render(f"Заработано: {day_earnings}", True, WHITE)
+            cafe_screen.blit(earnings_text, (result_bg_rect.x + 50, result_bg_rect.y + 170))
+
+            # Спрайт монеты рядом с суммой
+            coin_img = py.image.load("Sprite/coin.png").convert_alpha()
+            coin_img = py.transform.scale(coin_img, (40, 40))
+            cafe_screen.blit(coin_img, (result_bg_rect.x + 250, result_bg_rect.y + 170))
+
+            # Кнопка продолжения
+            continue_button = Button("Продолжить", result_bg_rect.x + 100, result_bg_rect.y + 240, 200, 50, BLACK,
+                                     (152, 251, 152))
+            continue_button.draw(cafe_screen)
+
+            # Обработка клика
+            mouse_pos = py.mouse.get_pos()
+            if py.mouse.get_pressed()[0] and continue_button.is_clicked(mouse_pos):
+                # Закрываем кафе и возвращаемся
+                db.close()
+                py.display.quit()
+                open_cafe_win(player_id, player_email, player_balance + day_earnings, player_name)
+                return True
+
+        return False
 
     def move_player(player, path, current_target):
         """Перемещает игрока по заданному пути."""
@@ -390,17 +470,26 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 if event.key == py.K_ESCAPE:
                     exit_confirmation_screen()
 
-            if event.type == py.MOUSEBUTTONDOWN and show_open_button:
-                if open_button.is_clicked(event.pos):
-                    show_open_button = False
-                    # Создаем нового NPC
-                    npc_info = random.choice(npc_data)
-                    path = random.choice(npc_paths_cafe)
-                    new_npc = NPC(path[0], scale, npc_info["sprite"], path)
-                    npc_group.add(new_npc)
-                    game_state = GameState.NPC_MOVING
-                    current_npc = new_npc
-                    npc_path_used = path
+            if event.type == py.MOUSEBUTTONDOWN and show_open_button and not day_completed:
+                if (open_button.is_clicked(event.pos) if len(purchased_items) > 0 else end_day_button.is_clicked(event.pos)):
+                    if len(purchased_items) > 0:
+                        show_open_button = False
+                        current_npc, npc_path_used = spawn_npc()
+                        game_state = GameState.NPC_MOVING
+                    else:
+                        # Начинаем завершение дня
+                        day_completed = True
+                        fade_alpha = 0  # Начинаем затемнение
+                        game_state = GameState.DAY_END
+                    # show_open_button = False
+                    # # Создаем нового NPC
+                    # npc_info = random.choice(npc_data)
+                    # path = random.choice(npc_paths_cafe[:2])  # Выбираем только пути прихода (0 или 1)
+                    # new_npc = NPC(path[0], scale, npc_info["sprite"], path)
+                    # npc_group.add(new_npc)
+                    # game_state = GameState.NPC_MOVING
+                    # current_npc = new_npc
+                    # npc_path_used = path
 
             # Обработка клика по индикатору еды
             if game_state == GameState.NPC_WAITING and event.type == py.MOUSEBUTTONDOWN:
@@ -449,6 +538,19 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 serving_timer = current_time
                 player.direction = "inaction"
                 game_state = GameState.SERVING
+
+                # Удаляем использованную еду из списка
+                # Удаляем использованную еду из списка
+                for i, item in enumerate(purchased_items):
+                    if item["name"] == indicator.food_type:
+                        purchased_items.pop(i)
+                        day_earnings += item["price"]  # Добавляем цену к заработку
+                        customers_served += 1  # Увеличиваем счетчик клиентов
+                        break
+                # for i, item in enumerate(purchased_items):
+                #     if item["name"] == indicator.food_type:
+                #         purchased_items.pop(i)
+                #         break
 
                 # Спавн еды в зависимости от пути
                 if npc_path_used == npc_paths_cafe[0]:
@@ -522,7 +624,17 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 current_npc.kill()
                 game_state = GameState.WAITING
                 show_open_button = True
+                show_open_button = len(purchased_items) > 0
                 current_npc = None
+
+        elif game_state == GameState.DAY_END:
+            # Затемнение экрана
+            if fade_alpha < 255:
+                fade_alpha = min(255, fade_alpha + 5)
+
+            # Показываем итоги
+            if end_day_screen():
+                break
 
         elif game_state == GameState.SERVING:
             # Процесс обслуживания (2 секунды)
@@ -552,8 +664,12 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         npc_group.draw(cafe_screen)
         food_indicators.draw(cafe_screen)
 
-        if show_open_button:
-            open_button.draw(cafe_screen)
+        if show_open_button and not day_completed:
+            if len(purchased_items) > 0:
+                open_button.draw(cafe_screen)
+            else:
+                end_day_button.draw(cafe_screen)
+                
         coin_display.draw(cafe_screen, player_balance)
         day_display.draw(cafe_screen)
 
