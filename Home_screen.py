@@ -323,6 +323,7 @@ def Yes_button(WHITE, BLACK, font):
                                     db.close()
 
                                     # Запуск игры
+                                    # show_welcome_screen(current_player_name)
                                     Game(current_player_id, current_player_email, current_player_name)
                                 else:
                                     text_er_surf = font.render("Ошибка получения данных", True, (220, 20, 60))

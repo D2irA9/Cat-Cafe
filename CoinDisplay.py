@@ -26,7 +26,7 @@ class CoinDisplay:
         self.border_color = (200, 180, 60)
         self.text_color = (0, 0, 0)
         self.position = (10, 10)
-        self.size = (120, 60)
+        self.size = (250, 60)
         self.normal_color = (0, 0, 0)
         self.positive_color = (0, 200, 0)
         self.negative_color = (200, 0, 0)
@@ -78,9 +78,9 @@ class CoinDisplay:
 
     def draw(self, screen, balance):
         """Отрисовка элемента с балансом"""
+        rect = py.Rect(self.position[0], self.position[1], self.size[0], self.size[1])
 
         # Фон и рамка
-        rect = py.Rect(self.position[0], self.position[1], self.size[0], self.size[1])
         py.draw.rect(screen, self.bg_color, rect)
         py.draw.rect(screen, self.border_color, rect, 2)
 

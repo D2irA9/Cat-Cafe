@@ -247,6 +247,38 @@ def show_market(player_id, player_email, player_balance, player_name):
         py.display.flip()
         clock.tick(60)
 
+class FoodIndicator(py.sprite.Sprite):
+    def __init__(self, npc, food_type):
+        super().__init__()
+        self.npc = npc
+        self.food_type = food_type
+
+        # Создаем временный объект Food для получения спрайта
+        temp_food = Food((0, 0), food_type, scale=2)  # Масштаб 2 для лучшей видимости
+
+        # Создаем основное изображение индикатора
+        self.image = py.Surface((50, 50), py.SRCALPHA)
+
+        # Рисуем круг с темным контуром
+        py.draw.circle(self.image, (255, 255, 255), (25, 25), 22)
+        py.draw.circle(self.image, (50, 50, 50), (25, 25), 22, 2)
+
+        # Размещаем спрайт еды по центру
+        food_img = temp_food.image
+        food_rect = food_img.get_rect(center=(25, 25))
+        self.image.blit(food_img, food_rect)
+
+        self.rect = self.image.get_rect()
+        self.update()
+
+    def update(self):
+        # Позиционируем над NPC
+        self.rect.centerx = self.npc.rect.centerx
+        self.rect.bottom = self.npc.rect.top - 5
+
+    def is_clicked(self, pos):
+        """Проверяет, был ли клик по индикатору еды"""
+        return self.rect.collidepoint(pos)
 
 def open_cafe_win(player_id, player_email, player_balance, player_name):
     """Функция для открытия кафе с NPC клиентами"""
@@ -262,7 +294,8 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
     # Инициализация групп спрайтов
     all_sprites = py.sprite.Group()
     cafe_tile_group = py.sprite.Group()
-    npc_group = py.sprite.Group()  # Отдельная группа для NPC
+    npc_group = py.sprite.Group()
+    food_indicators = py.sprite.Group()
 
     # Загрузка карты кафе
     cafe_map = load_pygame("Map/cat-cafe.tmx")
@@ -278,36 +311,23 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
     player = Player((60, 180), scale=4)
     all_sprites.add(player)
 
-    # Путь для игрока
-    path_cafe = [
-        [(30, -30), (30, 60), (320, 60), (320, 130), (250, 230)],
-    ]
+    # Состояния игры
+    class GameState:
+        WAITING = 0
+        NPC_MOVING = 1
+        NPC_WAITING = 2
+        PLAYER_MOVING = 3
+        SERVING = 4
+
+    game_state = GameState.WAITING
+    current_npc = None
+    player_path = []
     current_target = 0
+    wait_timer = 0
+    serving_timer = 0
+    npc_path_used = None
 
-    def handle_movement(player, path):
-        """Обработка движения игрока"""
-        global current_target
-        if current_target < len(path):
-            target_x, target_y = path[current_target]
-            # Движение по X
-            if player.rect.x < target_x:
-                player.move("right")
-            elif player.rect.x > target_x:
-                player.move("left")
-
-            # Движение по Y
-            if player.rect.y < target_y:
-                player.move("down")
-            elif player.rect.y > target_y:
-                player.move("up")
-
-            # Проверка достижения точки
-            if (abs(player.rect.x - target_x) < 5 and abs(player.rect.y - target_y) < 5):
-                current_target += 1
-
-        return current_target
-
-        # Интерфейс
+    # Интерфейс
     coin_display = CoinDisplay()
     result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
     player_day = result[0][0] if result and len(result) > 0 else 0
@@ -325,18 +345,11 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         {"name": "Yevsey", "sprite": "Sprite/client/Yevsey.png"},
     ]
 
-    # Пути для NPC (примерные координаты)
-    npc_paths = [
-        # [(-50, 800), (50, 800), (50, 400), (175, 400), ],  # Путь 1
-        [(-40, 800), (40, 800), (40, 350), (350, 350), (350, 400), ],  # Путь 2
-        # [(-50, 500), (200, 500), (200, 400)],  # Путь 3
-        # [(700, 500), (450, 500), (450, 400)]  # Путь 4
+    # Пути для NPC
+    npc_paths_cafe = [
+        [(-50, 810), (50, 810), (50, 400), (175, 400)],  # Путь 1
+        [(-40, 810), (40, 810), (40, 350), (350, 350), (350, 400)],  # Путь 2
     ]
-
-    # Таймеры для NPC
-    npc_spawn_timer = 0
-    npc_spawn_delay = 0
-    spawning_npc = False
 
     # Основной цикл
     while True:
@@ -357,28 +370,88 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             if event.type == py.MOUSEBUTTONDOWN and show_open_button:
                 if open_button.is_clicked(event.pos):
                     show_open_button = False
-                    # Устанавливаем случайную задержку для появления NPC (2-4 секунды)
-                    npc_spawn_delay = random.randint(2000, 4000)
-                    npc_spawn_timer = current_time
-                    spawning_npc = True
+                    # Создаем нового NPC
+                    npc_info = random.choice(npc_data)
+                    path = random.choice(npc_paths_cafe)
+                    new_npc = NPC(path[0], scale, npc_info["sprite"], path)
+                    npc_group.add(new_npc)
+                    game_state = GameState.NPC_MOVING
+                    current_npc = new_npc
+                    npc_path_used = path
 
-        # Логика появления NPC
-        if spawning_npc and current_time - npc_spawn_timer > npc_spawn_delay:
-            # Выбираем случайного NPC и путь
-            npc_info = random.choice(npc_data)
-            path = random.choice(npc_paths)
+            # Обработка клика по индикатору еды
+            if game_state == GameState.NPC_WAITING and event.type == py.MOUSEBUTTONDOWN:
+                for indicator in food_indicators:
+                    if indicator.is_clicked(event.pos):
+                        # Задаем путь игрока к NPC
+                        player_path = [
+                            (player.rect.x, player.rect.y),
+                            (370, player.rect.y), (370, 300), (185 , 300)
+                        ]
+                        current_target = 0
+                        game_state = GameState.PLAYER_MOVING
 
-            # Создаем NPC
-            new_npc = NPC(path[0], scale, npc_info["sprite"], path)
-            npc_group.add(new_npc)
+        # Логика состояний игры
+        if game_state == GameState.NPC_MOVING:
+            if current_npc.path_completed:
+                # NPC дошел до конечной точки
+                wait_timer = current_time
+                game_state = GameState.NPC_WAITING
 
-            # Сбрасываем таймер для следующего NPC
-            spawning_npc = False
-            show_open_button = False  # Кнопка остается скрытой
+        elif game_state == GameState.NPC_WAITING:
+            # Ждем 2 секунды перед показом индикатора
+            if current_time - wait_timer > 2000 and not hasattr(current_npc, 'food_indicator'):
+                if purchased_items:  # Проверяем, есть ли купленные товары
+                    food_item = random.choice(purchased_items)
+                    indicator = FoodIndicator(current_npc, food_item["name"])
+                    food_indicators.add(indicator)
+                    current_npc.food_indicator = indicator
 
-        # Обновление
+
+
+        elif game_state == GameState.PLAYER_MOVING:
+            # Движение игрока к NPC
+            if current_target < len(player_path):
+                target_x, target_y = player_path[current_target]
+                if player.rect.x < target_x:
+                    player.move("right")
+                elif player.rect.x > target_x:
+                    player.move("left")
+                elif player.rect.y < target_y:
+                    player.move("down")
+                elif player.rect.y > target_y:
+                    player.move("up")
+                else:
+                    current_target += 1
+            else:
+                # Игрок дошел до NPC
+                serving_timer = current_time
+                player.direction = "inaction"
+                game_state = GameState.SERVING
+                # Спавн еды в зависимости от пути
+                if npc_path_used == npc_paths_cafe[0]:
+                    spawn_food_at = (270, 470)
+                elif npc_path_used == npc_paths_cafe[1]:
+                    spawn_food_at = (340, 470)
+                # Создаем объект еды в нужной позиции
+                food_item = Food(spawn_food_at, indicator.food_type, scale=2.5)  # Передаем scale
+                food_indicators.add(food_item)
+
+        elif game_state == GameState.SERVING:
+            # Процесс обслуживания (2 секунды)
+            if current_time - serving_timer > 2000:
+                # Завершаем обслуживание
+                if hasattr(current_npc, 'food_indicator'):
+                    current_npc.food_indicator.kill()
+                current_npc.kill()
+                game_state = GameState.WAITING
+                current_npc = None
+                show_open_button = True
+
+        # Обновление объектов
         all_sprites.update()
-        npc_group.update()  # Обновляем NPC отдельно
+        npc_group.update()
+        food_indicators.update()
 
         # Постепенное уменьшение затемнения
         if fade_alpha > 0:
@@ -387,21 +460,16 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
 
         # Отрисовка
         cafe_screen.fill(WHITE)
-
-        # 1. Отрисовка карты
         cafe_tile_group.draw(cafe_screen)
-
-        # 2. Отрисовка игрока и NPC
         all_sprites.draw(cafe_screen)
         npc_group.draw(cafe_screen)
+        food_indicators.draw(cafe_screen)
 
-        # 3. Отрисовка интерфейса
         if show_open_button:
             open_button.draw(cafe_screen)
         coin_display.draw(cafe_screen, player_balance)
         day_display.draw(cafe_screen)
 
-        # 4. Наложение эффекта затемнения
         if fade_alpha > 0:
             cafe_screen.blit(fade_surface, (0, 0))
 
