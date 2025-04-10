@@ -350,12 +350,12 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         {"name": "Nona", "sprite": "Sprite/client/Nona.png"},
         {"name": "Yevsey", "sprite": "Sprite/client/Yevsey.png"},
     ]
-
     # Пути для NPC
     npc_paths_cafe = [
         [(-50, 810), (50, 810), (50, 400), (175, 400)],  # Путь 1
         [(-40, 810), (40, 810), (40, 350), (350, 350), (350, 400)],  # Путь 2
-        [(175, 400), (640, 400)],  # Путь, который уходит за пределы карты
+        [(175, 400), (175, 350), (500, 350), (500, 810), (690, 810)], # Для 1 пути
+        [(350, 400), (350, 350), (500, 350), (500, 810), (690, 810)], # Для 2 пути
     ]
 
     def move_player(player, path, current_target):
@@ -449,6 +449,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 serving_timer = current_time
                 player.direction = "inaction"
                 game_state = GameState.SERVING
+
                 # Спавн еды в зависимости от пути
                 if npc_path_used == npc_paths_cafe[0]:
                     spawn_food_at = (270, 470)
@@ -457,7 +458,11 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 # Создаем объект еды в нужной позиции
                 food_item = Food(spawn_food_at, indicator.food_type, scale=2.5)  # Передаем scale
                 food_indicators.add(food_item)
-                food_timer = current_time  # Запоминаем время появления еды
+                food_timer = current_time
+
+                current_npc.food_indicator.kill()
+                del current_npc.food_indicator
+
                 # Создаем обратный путь
                 reverse_player_path = player_path[::-1]  # Создаем обратный путь
                 current_target = 0  # Сбрасываем текущую цель
@@ -480,6 +485,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             else:
                 serving_timer = current_time
                 player.direction = "inaction"
+                food_timer = current_time
                 game_state = GameState.WAIT_BEFORE_DISAPPEAR  # Переход к ожиданию перед исчезновением
 
         elif game_state == GameState.WAIT_BEFORE_DISAPPEAR:
@@ -497,26 +503,26 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                     current_npc.food_indicator.kill()
                     del current_npc.food_indicator
 
-                # Задаем NPC путь для ухода
-                if npc_path_used == npc_paths_cafe[0]:
-                    npc_leaving_path = [(175, 400), (50, 400), (50, 810), (-50, 810)]
-                elif npc_path_used == npc_paths_cafe[1]:
-                    npc_leaving_path = [(350, 400), (350, 350), (40, 350), (40, 810), (-40, 810)]
+                # Определяем путь ухода в зависимости от пути прихода
+                if npc_path_used == npc_paths_cafe[0]:  # Если пришел по пути 0
+                    leaving_path = npc_paths_cafe[2]  # Уходит по пути 2
+                elif npc_path_used == npc_paths_cafe[1]:  # Если пришел по пути 1
+                    leaving_path = npc_paths_cafe[3]  # Уходит по пути 3
 
-                current_npc.path = npc_leaving_path
+                # Обновляем путь NPC
+                current_npc.path = leaving_path
                 current_npc.current_path_index = 0
                 current_npc.path_completed = False
-                game_state = GameState.NPC_LEAVING  # NPC уходит
+
+                game_state = GameState.NPC_LEAVING
 
         elif game_state == GameState.NPC_LEAVING:
-            # NPC уходит за пределы карты
+            current_npc.update()  # Обновляем NPC для движения по пути
             if current_npc.path_completed:
-                current_npc.kill()  # Удаляем NPC
+                current_npc.kill()
                 game_state = GameState.WAITING
-                show_open_button = True  # Разрешаем спавнить нового NPC
+                show_open_button = True
                 current_npc = None
-            else:
-                current_npc.update()  # Обновляем NPC для движения по пути
 
         elif game_state == GameState.SERVING:
             # Процесс обслуживания (2 секунды)
