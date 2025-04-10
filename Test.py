@@ -317,7 +317,11 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         NPC_MOVING = 1
         NPC_WAITING = 2
         PLAYER_MOVING = 3
-        SERVING = 4
+        PLAYER_MOVING_BACK = 4
+        SERVING = 5
+        WAIT_BEFORE_DISAPPEAR = 6  # Новое состояние для ожидания перед исчезновением
+        FOOD_DISAPPEARING = 7
+        NPC_LEAVING = 8
 
     game_state = GameState.WAITING
     current_npc = None
@@ -325,6 +329,8 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
     current_target = 0
     wait_timer = 0
     serving_timer = 0
+    food_timer = 0  # Таймер для исчезновения еды
+    wait_before_disappear_timer = 0  # Таймер для ожидания перед исчезновением
     npc_path_used = None
 
     # Интерфейс
@@ -349,7 +355,24 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
     npc_paths_cafe = [
         [(-50, 810), (50, 810), (50, 400), (175, 400)],  # Путь 1
         [(-40, 810), (40, 810), (40, 350), (350, 350), (350, 400)],  # Путь 2
+        [(175, 400), (640, 400)],  # Путь, который уходит за пределы карты
     ]
+
+    def move_player(player, path, current_target):
+        """Перемещает игрока по заданному пути."""
+        if current_target < len(path):
+            target_x, target_y = path[current_target]
+            if player.rect.x < target_x:
+                player.move("right")
+            elif player.rect.x > target_x:
+                player.move("left")
+            elif player.rect.y < target_y:
+                player.move("down")
+            elif player.rect.y > target_y:
+                player.move("up")
+            else:
+                return True  # Достигли цели
+        return False  # Не достигли цели
 
     # Основной цикл
     while True:
@@ -386,7 +409,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                         # Задаем путь игрока к NPC
                         player_path = [
                             (player.rect.x, player.rect.y),
-                            (370, player.rect.y), (370, 300), (185 , 300)
+                            (370, player.rect.y), (370, 300), (185, 300)
                         ]
                         current_target = 0
                         game_state = GameState.PLAYER_MOVING
@@ -406,8 +429,6 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                     indicator = FoodIndicator(current_npc, food_item["name"])
                     food_indicators.add(indicator)
                     current_npc.food_indicator = indicator
-
-
 
         elif game_state == GameState.PLAYER_MOVING:
             # Движение игрока к NPC
@@ -436,6 +457,66 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 # Создаем объект еды в нужной позиции
                 food_item = Food(spawn_food_at, indicator.food_type, scale=2.5)  # Передаем scale
                 food_indicators.add(food_item)
+                food_timer = current_time  # Запоминаем время появления еды
+                # Создаем обратный путь
+                reverse_player_path = player_path[::-1]  # Создаем обратный путь
+                current_target = 0  # Сбрасываем текущую цель
+                game_state = GameState.PLAYER_MOVING_BACK  # Устанавливаем новое состояние
+
+        elif game_state == GameState.PLAYER_MOVING_BACK:
+            # Движение игрока обратно
+            if current_target < len(reverse_player_path):
+                target_x, target_y = reverse_player_path[current_target]
+                if player.rect.x < target_x:
+                    player.move("right")
+                elif player.rect.x > target_x:
+                    player.move("left")
+                elif player.rect.y < target_y:
+                    player.move("down")
+                elif player.rect.y > target_y:
+                    player.move("up")
+                else:
+                    current_target += 1
+            else:
+                serving_timer = current_time
+                player.direction = "inaction"
+                game_state = GameState.WAIT_BEFORE_DISAPPEAR  # Переход к ожиданию перед исчезновением
+
+        elif game_state == GameState.WAIT_BEFORE_DISAPPEAR:
+            # Ждем 10-15 секунд перед исчезновением еды и NPC
+            if current_time - serving_timer > 10000:  # 10 секунд
+                game_state = GameState.FOOD_DISAPPEARING  # Переход к состоянию исчезновения еды
+
+        elif game_state == GameState.FOOD_DISAPPEARING:
+            # Проверяем, прошло ли 5 секунд с момента появления еды
+            if current_time - food_timer > 5000:
+                for food in food_indicators:  # Удаляем всю еду
+                    food.kill()
+                # Убираем круг над NPC
+                if hasattr(current_npc, 'food_indicator'):
+                    current_npc.food_indicator.kill()
+                    del current_npc.food_indicator
+
+                # Задаем NPC путь для ухода
+                if npc_path_used == npc_paths_cafe[0]:
+                    npc_leaving_path = [(175, 400), (50, 400), (50, 810), (-50, 810)]
+                elif npc_path_used == npc_paths_cafe[1]:
+                    npc_leaving_path = [(350, 400), (350, 350), (40, 350), (40, 810), (-40, 810)]
+
+                current_npc.path = npc_leaving_path
+                current_npc.current_path_index = 0
+                current_npc.path_completed = False
+                game_state = GameState.NPC_LEAVING  # NPC уходит
+
+        elif game_state == GameState.NPC_LEAVING:
+            # NPC уходит за пределы карты
+            if current_npc.path_completed:
+                current_npc.kill()  # Удаляем NPC
+                game_state = GameState.WAITING
+                show_open_button = True  # Разрешаем спавнить нового NPC
+                current_npc = None
+            else:
+                current_npc.update()  # Обновляем NPC для движения по пути
 
         elif game_state == GameState.SERVING:
             # Процесс обслуживания (2 секунды)
@@ -475,7 +556,6 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
 
         py.display.flip()
         clock.tick(60)
-
 
 def Game(player_id, player_email, player_name):
     screen = py.display.set_mode((640, 960))

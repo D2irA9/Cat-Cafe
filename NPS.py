@@ -31,7 +31,7 @@ class NPC(py.sprite.Sprite):
         self.image = self.animations[self.direction][0]
         self.rect = self.image.get_rect(topleft=pos)
         self.frame_index = 0
-        self.animation_speed = 0.28
+        self.animation_speed = 0.1 # 0.28
         self.last_update = py.time.get_ticks()
         # Маршрут NPC
         self.path = path
