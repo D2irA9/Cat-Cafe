@@ -79,6 +79,7 @@ def exit_confirmation_screen():
                     all_sprites.empty()
                     tile_group.empty()
                     food_group.empty()
+                    db.close()
                     Home_screen.Home_screen()
                     return
 
@@ -248,13 +249,22 @@ def show_market(player_id, player_email, player_balance, player_name):
 
 
 def open_cafe_win(player_id, player_email, player_balance, player_name):
-    """Функция для открытия кафе после пути на работу"""
+    """Функция для открытия кафе с эффектом плавного появления"""
     cafe_screen = py.display.set_mode((640, 960))
     py.display.set_caption("Cat Cafe")
 
+    # Настройки эффекта плавного появления
+    fade_surface = py.Surface((640, 960))
+    fade_surface.fill(BLACK)
+    fade_alpha = 255  # Начинаем с полностью черного экрана
+    fade_speed = 3  # Скорость появления
+
+    # Инициализация групп спрайтов
+    all_sprites = py.sprite.Group()
+    cafe_tile_group = py.sprite.Group()
+
     # Загрузка карты кафе
     cafe_map = load_pygame("Map/cat-cafe.tmx")
-    cafe_tile_group = py.sprite.Group()
 
     # Загрузка тайлов
     for layer in cafe_map.visible_layers:
@@ -263,19 +273,60 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 pos = (x * TILE_SIZE * scale, y * TILE_SIZE * scale)
                 Tile(pos=pos, surf=surf, groups=cafe_tile_group, scale=scale)
 
-    running = True
-    while running:
+    # Игрок (изменил координаты на (320, 480) - центр экрана)
+    player = Player((320, 480), scale=4)
+    all_sprites.add(player)
+
+    # Интерфейс
+    coin_display = CoinDisplay()
+    result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
+    player_day = result[0][0] if result and len(result) > 0 else 0
+    day_display = DayDisplay((500, 10), (120, 60), player_day)
+    open_button = Button("Начать рабочий день", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+
+    # Основной цикл
+    while True:
+        player_balance = db.get_player_balance(player_id)
+
+        # Обработка событий
         for event in py.event.get():
             if event.type == py.QUIT:
-                running = False
+                db.close()
+                py.quit()
+                sys.exit()
 
+            if event.type == py.KEYDOWN:
+                if event.key == py.K_ESCAPE:
+                    exit_confirmation_screen()
+
+        # Обновление
+        all_sprites.update()
+
+        # Постепенное уменьшение затемнения
+        if fade_alpha > 0:
+            fade_alpha = max(0, fade_alpha - fade_speed)
+            fade_surface.set_alpha(fade_alpha)
+
+        # Отрисовка
         cafe_screen.fill(WHITE)
+
+        # Отрисовка карты
         cafe_tile_group.draw(cafe_screen)
+
+        # Отрисовка игрока и других спрайтов
+        all_sprites.draw(cafe_screen)
+
+        # Отрисовка интерфейса
+        open_button.draw(cafe_screen)
+        coin_display.draw(cafe_screen, player_balance)
+        day_display.draw(cafe_screen)
+
+        # Наложение эффекта затемнения
+        if fade_alpha > 0:
+            cafe_screen.blit(fade_surface, (0, 0))
+
         py.display.flip()
         clock.tick(60)
-
-    py.quit()
-    sys.exit()
 
 
 def Game(player_id, player_email, player_name):
@@ -304,7 +355,7 @@ def Game(player_id, player_email, player_name):
     day_display = DayDisplay((500, 10), (120, 60), player_day)
 
     # Кнопка
-    buy_button = Button("Купить", 135, 760, 350, 100, (0, 0, 0), (255, 218, 185))
+    buy_button = Button("Купить", 135, 760, 350, 100, (0, 0, 0), (152, 251, 152))
 
     # Игрок
     player = Player((130, 310), scale=4)
@@ -324,7 +375,6 @@ def Game(player_id, player_email, player_name):
 
         for event in py.event.get():
             if event.type == py.QUIT:
-                db.close()
                 py.quit()
                 sys.exit()
 
@@ -334,7 +384,7 @@ def Game(player_id, player_email, player_name):
 
             if event.type == py.MOUSEBUTTONDOWN:
                 if not is_moving and buy_button.is_clicked(event.pos):
-                    is_moving = True  # Начинаем движение при нажатии на "Купить"
+                    is_moving = True
 
         # Логика движения игрока
         if is_moving and not market_opened:
