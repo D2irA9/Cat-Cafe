@@ -115,7 +115,7 @@ class Food(py.sprite.Sprite):
         # Позиция ценника
         price_bg_pos = (self.rect.centerx - 35, pos_y + self.rect.height - 5)
         surface.blit(self.price_bg, price_bg_pos)
-        surface.blit(self.price_text, (price_bg_pos[0] + 10, price_bg_pos[1] + 5))  # Центрируем текст
+        surface.blit(self.price_text, (price_bg_pos[0] + 10, price_bg_pos[1] + 5))
         surface.blit(self.coin_icon, (price_bg_pos[0] + 40, price_bg_pos[1] + 2))
 
         # Позиция количества

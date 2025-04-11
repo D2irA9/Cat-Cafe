@@ -1,7 +1,7 @@
 import pygame as py
 
 class Tile(py.sprite.Sprite):
-    """Для прорисовки карты"""
+    """Класс для прорисовки карты"""
     def __init__(self, pos, surf, groups, scale):
         super().__init__(groups)
         if surf is not None:

@@ -3,9 +3,7 @@ import sys
 import re
 from Button import Button
 from Sql import Database
-# from Game import Game
-from Test import Game
-
+from Game import Game
 
 # Подключение к БД
 db = Database()
@@ -122,7 +120,7 @@ def No_button(WHITE, BLACK, font):
 
     text_er_surf = None
     text_er_rect = None
-    text_er_em_surf = None  # Инициализация переменной
+    text_er_em_surf = None
     text_er_em_rect = None
 
     while True:
@@ -228,7 +226,7 @@ def No_button(WHITE, BLACK, font):
         # Отрисовка текста ошибки
         if text_er_surf:
             new_screen.blit(text_er_surf, text_er_rect)
-        if text_er_em_surf:  # Убедитесь, что эта переменная инициализирована, если вы ее используете
+        if text_er_em_surf:
             new_screen.blit(text_er_em_surf, text_er_em_rect)
 
         # Управление видимостью курсора
@@ -294,8 +292,8 @@ def Yes_button(WHITE, BLACK, font):
                                     current_player_email = email
                                     db.close()
 
-                                    # Запуск игры
-                                    # show_welcome_screen(current_player_name)
+                                    # Запуск Приветсвия
+                                    show_welcome_screen(current_player_name)
                                     Game(current_player_id, current_player_email, current_player_name)
                                 else:
                                     text_er_surf = font.render("Ошибка получения данных", True, (220, 20, 60))
