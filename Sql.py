@@ -201,7 +201,6 @@ class Database:
             with self.connection.cursor() as cursor:
                 cursor.execute(query, (new_balance, player_id))
                 self.connection.commit()
-                print(f"Баланс игрока с ID {player_id} обновлен на {new_balance}.")
         except Exception as e:
             print(f"Ошибка при обновлении баланса: {e}")
 

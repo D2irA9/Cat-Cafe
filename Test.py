@@ -324,7 +324,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         PLAYER_MOVING = 3
         PLAYER_MOVING_BACK = 4
         SERVING = 5
-        WAIT_BEFORE_DISAPPEAR = 6  # Новое состояние для ожидания перед исчезновением
+        WAIT_BEFORE_DISAPPEAR = 6
         FOOD_DISAPPEARING = 7
         NPC_LEAVING = 8
         DAY_END = 9
@@ -335,8 +335,8 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
     current_target = 0
     wait_timer = 0
     serving_timer = 0
-    food_timer = 0  # Таймер для исчезновения еды
-    wait_before_disappear_timer = 0  # Таймер для ожидания перед исчезновением
+    food_timer = 0
+    wait_before_disappear_timer = 0
     npc_path_used = None
 
     # Интерфейс
@@ -383,9 +383,9 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
 
         # Выбираем случайного NPC из доступных
         npc_info = random.choice(available_npcs)
-        available_npcs.remove(npc_info)  # Удаляем из доступных
+        available_npcs.remove(npc_info)
 
-        path = random.choice(npc_paths_cafe[:2])  # Выбираем только пути прихода (0 или 1)
+        path = random.choice(npc_paths_cafe[:2])
         new_npc = NPC(path[0], scale, npc_info["sprite"], path)
         npc_group.add(new_npc)
         return new_npc, path
@@ -430,7 +430,6 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             # Обработка клика
             mouse_pos = py.mouse.get_pos()
             if py.mouse.get_pressed()[0] and continue_button.is_clicked(mouse_pos):
-                # Закрываем кафе и возвращаемся
                 db.close()
                 py.display.quit()
                 open_cafe_win(player_id, player_email, player_balance + day_earnings, player_name)
@@ -451,8 +450,8 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             elif player.rect.y > target_y:
                 player.move("up")
             else:
-                return True  # Достигли цели
-        return False  # Не достигли цели
+                return True
+        return False
 
     # Основной цикл
     while True:
@@ -474,23 +473,14 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 if (open_button.is_clicked(event.pos) if len(purchased_items) > 0 else end_day_button.is_clicked(
                         event.pos)):
                     if len(purchased_items) > 0:
-                        show_open_button = False  # Убираем кнопку сразу после нажатия
+                        show_open_button = False
                         current_npc, npc_path_used = spawn_npc()
                         game_state = GameState.NPC_MOVING
                     else:
                         # Начинаем завершение дня
                         day_completed = True
-                        fade_alpha = 0  # Начинаем затемнение
+                        fade_alpha = 0
                         game_state = GameState.DAY_END
-                    # show_open_button = False
-                    # # Создаем нового NPC
-                    # npc_info = random.choice(npc_data)
-                    # path = random.choice(npc_paths_cafe[:2])  # Выбираем только пути прихода (0 или 1)
-                    # new_npc = NPC(path[0], scale, npc_info["sprite"], path)
-                    # npc_group.add(new_npc)
-                    # game_state = GameState.NPC_MOVING
-                    # current_npc = new_npc
-                    # npc_path_used = path
 
             # Обработка клика по индикатору еды
             if game_state == GameState.NPC_WAITING and event.type == py.MOUSEBUTTONDOWN:
@@ -507,14 +497,13 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         # Логика состояний игры
         if game_state == GameState.NPC_MOVING:
             if current_npc.path_completed:
-                # NPC дошел до конечной точки
                 wait_timer = current_time
                 game_state = GameState.NPC_WAITING
 
         elif game_state == GameState.NPC_WAITING:
             # Ждем 2 секунды перед показом индикатора
             if current_time - wait_timer > 2000 and not hasattr(current_npc, 'food_indicator'):
-                if purchased_items:  # Проверяем, есть ли купленные товары
+                if purchased_items:
                     food_item = random.choice(purchased_items)
                     indicator = FoodIndicator(current_npc, food_item["name"])
                     food_indicators.add(indicator)
@@ -539,37 +528,33 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 serving_timer = current_time
                 player.direction = "inaction"
                 game_state = GameState.SERVING
-
-                # Удаляем использованную еду из списка
                 # Удаляем использованную еду из списка
                 for i, item in enumerate(purchased_items):
                     if item["name"] == indicator.food_type:
                         purchased_items.pop(i)
-                        day_earnings += item["price"]  # Добавляем цену к заработку
-                        customers_served += 1  # Увеличиваем счетчик клиентов
+                        day_earnings += item["price"]
+                        customers_served += 1
                         break
-                # for i, item in enumerate(purchased_items):
-                #     if item["name"] == indicator.food_type:
-                #         purchased_items.pop(i)
-                #         break
-
                 # Спавн еды в зависимости от пути
                 if npc_path_used == npc_paths_cafe[0]:
                     spawn_food_at = (270, 470)
                 elif npc_path_used == npc_paths_cafe[1]:
                     spawn_food_at = (340, 470)
                 # Создаем объект еды в нужной позиции
-                food_item = Food(spawn_food_at, indicator.food_type, scale=2.5)  # Передаем scale
+                food_item = Food(spawn_food_at, indicator.food_type, scale=2.5)
                 food_indicators.add(food_item)
                 food_timer = current_time
+
+                food_name = indicator.food_type
+                print(food_name)
 
                 current_npc.food_indicator.kill()
                 del current_npc.food_indicator
 
                 # Создаем обратный путь
-                reverse_player_path = player_path[::-1]  # Создаем обратный путь
-                current_target = 0  # Сбрасываем текущую цель
-                game_state = GameState.PLAYER_MOVING_BACK  # Устанавливаем новое состояние
+                reverse_player_path = player_path[::-1]
+                current_target = 0
+                game_state = GameState.PLAYER_MOVING_BACK
 
         elif game_state == GameState.PLAYER_MOVING_BACK:
             # Движение игрока обратно
@@ -589,17 +574,16 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 serving_timer = current_time
                 player.direction = "inaction"
                 food_timer = current_time
-                game_state = GameState.WAIT_BEFORE_DISAPPEAR  # Переход к ожиданию перед исчезновением
-
+                game_state = GameState.WAIT_BEFORE_DISAPPEAR
         elif game_state == GameState.WAIT_BEFORE_DISAPPEAR:
             # Ждем 10-15 секунд перед исчезновением еды и NPC
-            if current_time - serving_timer > 10000:  # 10 секунд
-                game_state = GameState.FOOD_DISAPPEARING  # Переход к состоянию исчезновения еды
+            if current_time - serving_timer > 10000:
+                game_state = GameState.FOOD_DISAPPEARING
 
         elif game_state == GameState.FOOD_DISAPPEARING:
             # Проверяем, прошло ли 5 секунд с момента появления еды
             if current_time - food_timer > 5000:
-                for food in food_indicators:  # Удаляем всю еду
+                for food in food_indicators:
                     food.kill()
                 # Убираем круг над NPC
                 if hasattr(current_npc, 'food_indicator'):
@@ -607,10 +591,10 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                     del current_npc.food_indicator
 
                 # Определяем путь ухода в зависимости от пути прихода
-                if npc_path_used == npc_paths_cafe[0]:  # Если пришел по пути 0
-                    leaving_path = npc_paths_cafe[2]  # Уходит по пути 2
-                elif npc_path_used == npc_paths_cafe[1]:  # Если пришел по пути 1
-                    leaving_path = npc_paths_cafe[3]  # Уходит по пути 3
+                if npc_path_used == npc_paths_cafe[0]:
+                    leaving_path = npc_paths_cafe[2]
+                elif npc_path_used == npc_paths_cafe[1]:
+                    leaving_path = npc_paths_cafe[3]
 
                 # Обновляем путь NPC
                 current_npc.path = leaving_path
@@ -624,9 +608,28 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             current_npc.update()
             if current_npc.path_completed:
                 current_npc.kill()
-                game_state = GameState.WAITING
-                # Показываем кнопку только если есть еще еда
+            # current_npc.update()
+            # if current_npc.path_completed:
+            #     current_npc.kill()
+            #     game_state = GameState.WAITING
+            #     current_npc = None
+                # Если еще есть еда - запускаем нового NPC
+                if len(purchased_items) > 0:
+                    wait_timer = current_time  # Засекаем время паузы
+                    game_state = GameState.WAITING  # Краткая пауза перед новым NPC
+                else:
+                    # Если еда закончилась - завершаем день
+                    day_completed = True
+                    fade_alpha = 0
+                    game_state = GameState.DAY_END
+
                 current_npc = None
+
+        elif game_state == GameState.WAITING:
+            # Если прошло время паузы (например, 1 секунда) - запускаем нового NPC
+            if current_time - wait_timer > 1000 and len(purchased_items) > 0:
+                current_npc, npc_path_used = spawn_npc()
+                game_state = GameState.NPC_MOVING
 
         elif game_state == GameState.DAY_END:
             # Затемнение экрана
@@ -662,11 +665,11 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         npc_group.draw(cafe_screen)
         food_indicators.draw(cafe_screen)
 
-        if show_open_button and not day_completed:
-            if len(purchased_items) > 0:
-                open_button.draw(cafe_screen)
-            else:
-                end_day_button.draw(cafe_screen)
+        # if show_open_button and not day_completed:
+        #     if len(purchased_items) > 0:
+        #         open_button.draw(cafe_screen)
+        #     else:
+        #         end_day_button.draw(cafe_screen)
 
         coin_display.draw(cafe_screen, player_balance)
         day_display.draw(cafe_screen)
