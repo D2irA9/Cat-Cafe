@@ -364,8 +364,8 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
 
     # Пути для NPC
     npc_paths_cafe = [
-        [(-50, 810), (50, 810), (50, 400), (175, 400)],  # Путь до стула
-        [(-40, 810), (40, 810), (40, 350), (350, 350), (350, 400)],  # Путь до второго стула
+        [(-40, 810), (45, 810), (45, 350),(50, 350), (50, 400)],  # Путь до стула
+        [(-40, 810), (45, 810), (45, 350), (350, 350), (350, 400)],  # Путь до второго стула
         [(175, 400), (175, 350), (500, 350), (500, 810), (690, 810)],  # Путь для выхода (стул1)
         [(350, 400), (350, 350), (500, 350), (500, 810), (690, 810)],  # Путь для выхода (стул2)
     ]
@@ -422,8 +422,9 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             if client_result and dish_result:
                 client_id = client_result[0][0]
                 dish_id = dish_result[0][0]
-                db.update_day(player_id)
                 db.update_orders(player_id, client_id, dish_id)
+
+        db.update_day(player_id)
 
         running = True
         while running:
