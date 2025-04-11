@@ -189,6 +189,7 @@ def show_market(player_id, player_email, player_balance, player_name):
     while running:
         for event in py.event.get():
             if event.type == py.QUIT:
+                db.close()
                 py.quit()
                 sys.exit()
 
@@ -361,6 +362,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
 
     available_npcs = npc_data.copy()
 
+    customer_history = []
     # Пути для NPC
     npc_paths_cafe = [
         [(-50, 810), (50, 810), (50, 400), (175, 400)],  # Путь 1
@@ -387,55 +389,104 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
 
         path = random.choice(npc_paths_cafe[:2])
         new_npc = NPC(path[0], scale, npc_info["sprite"], path)
+        new_npc.name = npc_info["name"]
         npc_group.add(new_npc)
         return new_npc, path
 
+    def show_day_results(player_id, player_balance, customers_served, day_earnings, customer_history):
+        """Отображает экран с итогами дня в отдельном окне"""
+        # Создаем новое окно
+        result_screen = py.display.set_mode((640, 960))
+        py.display.set_caption("Итоги дня")
+
+        # Настройки шрифта
+        title_font = py.font.Font("Font/PixelizerBold.ttf", 48)
+        text_font = py.font.Font("Font/PixelizerBold.ttf", 36)
+
+        # Фон
+        background = py.Surface((640, 960))
+        background.fill((50, 50, 50))
+
+        # Кнопка продолжения
+        continue_button = Button("Продолжить", 170, 800, 300, 100, BLACK, (152, 251, 152))
+
+        # CoinDisplay для анимации монет
+        coin_display = CoinDisplay()
+        coin_display.position = (320, 400)
+        coin_display.display_size = 50
+
+        # Записываем историю заказов в БД
+        for order in customer_history:
+            # Получаем ID клиента и блюда из базы данных
+            client_result = db.execute_query("SELECT id FROM client WHERE name = %s", (order["name"],))
+            dish_result = db.execute_query("SELECT id FROM menu WHERE name = %s", (order["food_name"],))
+
+            if client_result and dish_result:
+                client_id = client_result[0][0]
+                dish_id = dish_result[0][0]
+                db.update_day(player_id)
+                db.update_orders(player_id, client_id, dish_id)
+
+        running = True
+        while running:
+            for event in py.event.get():
+                if event.type == py.QUIT:
+                    db.close()
+                    py.quit()
+                    sys.exit()
+
+                if event.type == py.MOUSEBUTTONDOWN:
+                    if continue_button.is_clicked(event.pos):
+                        # Закрываем это окно и открываем кафе снова
+                        py.display.quit()
+                        player_balance = db.update_balance(player_id, player_balance + day_earnings)
+                        Game(player_id, player_email, player_name)
+                        return
+
+            # Отрисовка
+            result_screen.blit(background, (0, 0))
+
+            # Заголовок
+            title = title_font.render("Итоги рабочего дня", True, WHITE)
+            title_rect = title.get_rect(center=(320, 100))
+            result_screen.blit(title, title_rect)
+
+            # Клиенты
+            customers_text = text_font.render(f"Клиентов обслужено: {customers_served}", True, WHITE)
+            customers_rect = customers_text.get_rect(center=(320, 250))
+            result_screen.blit(customers_text, customers_rect)
+
+            # Заработок
+            earnings_label = text_font.render("Заработано:", True, WHITE)
+            earnings_label_rect = earnings_label.get_rect(center=(320, 350))
+            result_screen.blit(earnings_label, earnings_label_rect)
+
+            # Анимация монет
+            coin_display.update()
+            coin_display.draw(result_screen, day_earnings)
+
+            # Кнопка продолжения
+            continue_button.draw(result_screen)
+
+            py.display.flip()
+            clock.tick(60)
+
+
     def end_day_screen():
-        """Отображает экран с итогами дня"""
+        """Завершает день и показывает экран результатов"""
         nonlocal fade_alpha
 
         # Затемнение экрана
-        fade_surface.fill(BLACK)
-        fade_surface.set_alpha(fade_alpha)
-        cafe_screen.blit(fade_surface, (0, 0))
-
-        # Если экран полностью затемнен - показываем итоги
-        if fade_alpha == 255:
-            # Фон для итогов
-            result_bg = py.Surface((400, 300))
-            result_bg.fill((50, 50, 50))
-            result_bg_rect = result_bg.get_rect(center=(cafe_screen.get_width() // 2, cafe_screen.get_height() // 2))
-            cafe_screen.blit(result_bg, result_bg_rect)
-
-            # Текст итогов
-            title = font.render("Итоги рабочего дня:", True, WHITE)
-            cafe_screen.blit(title, (result_bg_rect.x + 50, result_bg_rect.y + 30))
-
-            customers_text = font.render(f"Обслужено клиентов: {customers_served}", True, WHITE)
-            cafe_screen.blit(customers_text, (result_bg_rect.x + 50, result_bg_rect.y + 100))
-
-            earnings_text = font.render(f"Заработано: {day_earnings}", True, WHITE)
-            cafe_screen.blit(earnings_text, (result_bg_rect.x + 50, result_bg_rect.y + 170))
-
-            # Спрайт монеты рядом с суммой
-            coin_img = py.image.load("Sprite/coin.png").convert_alpha()
-            coin_img = py.transform.scale(coin_img, (40, 40))
-            cafe_screen.blit(coin_img, (result_bg_rect.x + 250, result_bg_rect.y + 170))
-
-            # Кнопка продолжения
-            continue_button = Button("Продолжить", result_bg_rect.x + 100, result_bg_rect.y + 240, 200, 50, BLACK,
-                                     (152, 251, 152))
-            continue_button.draw(cafe_screen)
-
-            # Обработка клика
-            mouse_pos = py.mouse.get_pos()
-            if py.mouse.get_pressed()[0] and continue_button.is_clicked(mouse_pos):
-                db.close()
-                py.display.quit()
-                open_cafe_win(player_id, player_email, player_balance + day_earnings, player_name)
-                return True
-
-        return False
+        if fade_alpha < 255:
+            fade_alpha = min(255, fade_alpha + 5)
+            fade_surface.set_alpha(fade_alpha)
+            cafe_screen.blit(fade_surface, (0, 0))
+            return False
+        else:
+            # Когда экран полностью затемнен, показываем результаты
+            py.display.quit()
+            show_day_results(player_id, player_balance, customers_served, day_earnings, customer_history)
+            return True
 
     def move_player(player, path, current_target):
         """Перемещает игрока по заданному пути."""
@@ -475,6 +526,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                     if len(purchased_items) > 0:
                         show_open_button = False
                         current_npc, npc_path_used = spawn_npc()
+                        npc_name = current_npc.name
                         game_state = GameState.NPC_MOVING
                     else:
                         # Начинаем завершение дня
@@ -524,10 +576,19 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 else:
                     current_target += 1
             else:
-                # Игрок дошел до NPC
                 serving_timer = current_time
                 player.direction = "inaction"
                 game_state = GameState.SERVING
+
+                npc_name = current_npc.name
+                food_name = indicator.food_type
+                customer_history.append({
+                    "name": npc_name,
+                    "food_name": food_name,
+                    "id_player": player_id
+                })
+                print(f"NPC {npc_name} заказал(а): {food_name}")
+
                 # Удаляем использованную еду из списка
                 for i, item in enumerate(purchased_items):
                     if item["name"] == indicator.food_type:
@@ -546,7 +607,6 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
                 food_timer = current_time
 
                 food_name = indicator.food_type
-                print(food_name)
 
                 current_npc.food_indicator.kill()
                 del current_npc.food_indicator
@@ -608,15 +668,10 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             current_npc.update()
             if current_npc.path_completed:
                 current_npc.kill()
-            # current_npc.update()
-            # if current_npc.path_completed:
-            #     current_npc.kill()
-            #     game_state = GameState.WAITING
-            #     current_npc = None
                 # Если еще есть еда - запускаем нового NPC
                 if len(purchased_items) > 0:
-                    wait_timer = current_time  # Засекаем время паузы
-                    game_state = GameState.WAITING  # Краткая пауза перед новым NPC
+                    wait_timer = current_time
+                    game_state = GameState.WAITING
                 else:
                     # Если еда закончилась - завершаем день
                     day_completed = True
@@ -629,6 +684,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
             # Если прошло время паузы (например, 1 секунда) - запускаем нового NPC
             if current_time - wait_timer > 1000 and len(purchased_items) > 0:
                 current_npc, npc_path_used = spawn_npc()
+                npc_name = current_npc.name
                 game_state = GameState.NPC_MOVING
 
         elif game_state == GameState.DAY_END:
@@ -669,7 +725,7 @@ def open_cafe_win(player_id, player_email, player_balance, player_name):
         #     if len(purchased_items) > 0:
         #         open_button.draw(cafe_screen)
         #     else:
-        #         end_day_button.draw(cafe_screen)
+        #         end_day_button.draw(cafe_screen)SERVING
 
         coin_display.draw(cafe_screen, player_balance)
         day_display.draw(cafe_screen)
@@ -701,8 +757,7 @@ def Game(player_id, player_email, player_name):
 
     # Монеты и дни
     coin_display = CoinDisplay()
-    result = db.execute_query("SELECT `day` FROM `player` WHERE id=%s", (player_id))
-    player_day = result[0][0] if result and len(result) > 0 else 0
+    player_day = db.get_day(player_id)
     day_display = DayDisplay((500, 10), (120, 60), player_day)
 
     # Кнопка
@@ -726,6 +781,7 @@ def Game(player_id, player_email, player_name):
 
         for event in py.event.get():
             if event.type == py.QUIT:
+                db.close()
                 py.quit()
                 sys.exit()
 

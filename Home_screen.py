@@ -4,7 +4,6 @@ import re
 from Button import Button
 from Sql import Database
 # from Game import Game
-import json
 from Test import Game
 
 
@@ -31,33 +30,6 @@ def Home_screen():
 
     # Шрифт
     font = py.font.Font("Font/PixelizerBold.ttf", 36)
-
-    # Проверка существования файла с данными игрока
-    # try:
-    #     with open("player_data.json", "r") as file:
-    #         # Проверяем, что файл не пустой
-    #         if file.readable():
-    #             file.seek(0)  # Возвращаемся в начало файла
-    #             player_data = json.load(file)
-    #             current_player_id = player_data["id"]
-    #             current_player_email = player_data["email"]
-    #             current_player_balance = player_data["balance"]
-    #             current_player_name = player_data["name"]
-    #
-    #             # Если игрок существует, показываем приветствие
-    #             show_welcome_screen(current_player_name)
-    #             return
-    #         else:
-    #             print("Файл player_data.json пуст.")
-    # except FileNotFoundError:
-    #     print("Файл player_data.json не найден. Создайте новый аккаунт.")
-    # except json.JSONDecodeError:
-    #     print("Ошибка чтения файла player_data.json. Проверьте формат файла.")
-    #     # Удаляем поврежденный файл, чтобы создать новый
-    #     import os
-    #     if os.path.exists("player_data.json"):
-    #         os.remove("player_data.json")
-    #     print("Поврежденный файл удален. Попробуйте снова.")
 
     # Кнопки
     button_yes = Button("Да", 135, 360, 350, 100, WHITE, (30, 144, 255))
@@ -162,7 +134,6 @@ def No_button(WHITE, BLACK, font):
 
             if event.type == py.KEYDOWN:
                 if event.key == py.K_ESCAPE:
-                    db.close()
                     return Home_screen()
 
                 if active_input != -1:
@@ -297,6 +268,7 @@ def Yes_button(WHITE, BLACK, font):
     while True:
         for event in py.event.get():
             if event.type == py.QUIT:
+                db.close()
                 py.quit()
                 sys.exit()
 

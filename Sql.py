@@ -190,6 +190,27 @@ class Database:
         result = self.execute_query(query, (player_id,))
         return result[0][0] if result else None
 
+    def get_day(self, player_id):
+        """Получение количества дней"""
+        query = "SELECT day FROM player WHERE id = %s"
+        result = self.execute_query(query, (player_id,))
+
+        if result and isinstance(result, (list, tuple)) and len(result) > 0:
+            return result[0][0]
+        return 0
+
+    def update_day(self, player_id):
+        """Обновление счетчика дней"""
+        day = self.get_day(player_id)
+
+        query = "UPDATE player SET day = %s WHERE id = %s"
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(query, (day+1, player_id))
+                self.connection.commit()
+        except Exception as e:
+            print(f"Ошибка при обновлении дней: {e}")
+
     def update_balance(self, player_id, new_balance):
         """Обновляет баланс игрока в базе данных"""
         if not self.check_player_exists(player_id):
@@ -203,6 +224,13 @@ class Database:
                 self.connection.commit()
         except Exception as e:
             print(f"Ошибка при обновлении баланса: {e}")
+
+    def  update_orders(self, player_id, client_id, dish_id):
+        query = "INSERT INTO orders (player_id, client_id, dish_id) VALUES (%s, %s, %s)"
+        params = (player_id, client_id, dish_id)
+
+        self.execute_query(query, params)
+        print("Запись добавлена.")
 
     def get_menu_items(self):
         """Получает список всех блюд и их цен из базы данных."""
